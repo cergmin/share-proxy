@@ -1,0 +1,31 @@
+{
+    "name": "@share-proxy/admin-api",
+    "version": "1.0.0",
+    "private": true,
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "test": "vitest run",
+        "test:integration": "vitest run",
+        "test:watch": "vitest"
+    },
+    "dependencies": {
+        "@better-auth/drizzle-adapter": "^1.5.3",
+        "@fastify/cors": "^11.2.0",
+        "@share-proxy/adapters": "workspace:*",
+        "@share-proxy/db": "workspace:*",
+        "better-auth": "^1.5.3",
+        "dotenv": "^17.3.1",
+        "drizzle-orm": "^0.30.10",
+        "fastify": "^5.7.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.24",
+        "tsx": "^4.7.1",
+        "typescript": "^5.3.3",
+        "vitest": "^2.1.8"
+    }
+}
