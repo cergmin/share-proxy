@@ -1,0 +1,155 @@
+.select {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+}
+
+.button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 36px;
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    background-color: transparent;
+    padding: 0 12px;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    text-align: left;
+}
+
+.button:hover {
+    background-color: hsl(var(--accent) / 0.5);
+}
+
+.button[data-focus-visible] {
+    border-color: hsl(var(--ring));
+}
+
+.button[data-invalid] {
+    border-color: hsl(var(--destructive));
+}
+
+.value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.value[data-placeholder] {
+    color: hsl(var(--muted-foreground));
+}
+
+.icon {
+    color: hsl(var(--muted-foreground));
+    flex-shrink: 0;
+}
+
+.select.disabled {
+    opacity: 0.5;
+}
+
+.select.disabled .button {
+    cursor: not-allowed;
+    background-color: hsl(var(--muted));
+}
+
+.popover {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    min-width: var(--trigger-width);
+    z-index: 50;
+    outline: none;
+}
+
+.popover[data-entering] {
+    animation: fadeIn 0.15s ease-out;
+}
+
+.popover[data-exiting] {
+    animation: fadeOut 0.1s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+.listbox {
+    outline: none;
+    padding: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    border-radius: calc(var(--radius) - 2px);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.15s;
+}
+
+.itemText {
+    flex: 1;
+}
+
+.checkIcon {
+    color: hsl(var(--foreground));
+}
+
+.focusedItem {
+    background-color: hsl(var(--accent));
+}
+
+.selectedItem {
+    font-weight: 500;
+}
+
+.description {
+    font-size: 0.8rem;
+    color: hsl(var(--muted-foreground));
+}
+
+.error {
+    font-size: 0.8rem;
+    color: hsl(var(--destructive));
+}

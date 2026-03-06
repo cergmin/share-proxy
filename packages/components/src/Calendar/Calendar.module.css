@@ -1,0 +1,228 @@
+.datePicker {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+}
+
+.fieldGroup {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    background-color: transparent;
+    transition: border-color 0.2s;
+    overflow: hidden;
+}
+
+.fieldGroup[data-focus-visible],
+.fieldGroup:focus-within {
+    border-color: hsl(var(--ring));
+}
+
+.fieldGroup[data-invalid] {
+    border-color: hsl(var(--destructive));
+}
+
+.dateInput {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+}
+
+.dateSegment {
+    padding: 0 2px;
+    border-radius: 4px;
+    outline: none;
+}
+
+.dateSegment[data-placeholder] {
+    color: hsl(var(--muted-foreground));
+}
+
+.dateSegment:focus {
+    background-color: hsl(var(--foreground));
+    color: hsl(var(--background));
+}
+
+.calendarButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 100%;
+    background: transparent;
+    border: none;
+    border-left: 1px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    outline: none;
+}
+
+.calendarButton:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--foreground));
+}
+
+.calendarButton[data-focus-visible] {
+    background-color: hsl(var(--accent));
+    box-shadow: inset 0 0 0 2px hsl(var(--ring));
+}
+
+.popover {
+    background-color: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    padding: 16px;
+    z-index: 50;
+    outline: none;
+}
+
+.popover[data-entering] {
+    animation: fadeIn 0.15s ease-out;
+}
+
+.popover[data-exiting] {
+    animation: fadeOut 0.1s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+.dialog {
+    outline: none;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.navButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.navButton:hover {
+    background-color: hsl(var(--accent));
+}
+
+.navButton[data-focus-visible] {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
+.heading {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.grid {
+    border-collapse: collapse;
+}
+
+.headerCell {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    text-align: center;
+}
+
+.cell {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.hovered {
+    background-color: hsl(var(--accent));
+}
+
+.focused {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
+.selected {
+    background-color: hsl(var(--foreground));
+    color: hsl(var(--background));
+    font-weight: 600;
+}
+
+.disabledCell {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.outsideRange {
+    color: hsl(var(--muted-foreground));
+}
+
+.description,
+.error {
+    font-size: 0.8rem;
+}
+
+.description {
+    color: hsl(var(--muted-foreground));
+}
+
+.error {
+    color: hsl(var(--destructive));
+}

@@ -1,0 +1,57 @@
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    cursor: default;
+}
+
+.input {
+    display: flex;
+    height: 36px;
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border));
+    background-color: transparent;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: hsl(var(--foreground));
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.input:focus,
+.input[data-focus-visible] {
+    border-color: hsl(var(--ring));
+}
+
+.input[data-invalid] {
+    border-color: hsl(var(--destructive));
+}
+
+.field.disabled {
+    opacity: 0.5;
+}
+
+.field.disabled .input {
+    cursor: not-allowed;
+    background-color: hsl(var(--muted));
+}
+
+.description {
+    font-size: 0.8rem;
+    color: hsl(var(--muted-foreground));
+}
+
+.error {
+    font-size: 0.8rem;
+    color: hsl(var(--destructive));
+}
