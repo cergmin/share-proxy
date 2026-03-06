@@ -1,0 +1,17 @@
+node_modules/
+**/node_modules/
+
+dist/
+**/dist/
+
+.env
+.env.local
+.env.*.local
+
+storage/
+test-results/
+playwright-report/
+e2e/.auth/
+
+.DS_Store
+*.log
