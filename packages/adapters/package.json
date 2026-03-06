@@ -1,0 +1,23 @@
+{
+    "name": "@share-proxy/adapters",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": "./dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest run",
+        "test:unit": "vitest run",
+        "test:watch": "vitest"
+    },
+    "dependencies": {
+        "@share-proxy/core": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.24",
+        "typescript": "^5.3.3",
+        "vitest": "^2.1.8"
+    }
+}

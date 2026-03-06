@@ -1,0 +1,339 @@
+.container {
+    display: flex;
+    min-height: 100vh;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+}
+
+.sidebar {
+    width: 256px;
+    background-color: hsl(var(--card));
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid hsl(var(--border));
+    transition: width 0.3s ease;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+}
+
+/* Header / Brand */
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 20px;
+}
+
+.brandIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(315deg, #370000 0%, #e04505 50%, #e6bab8 100%);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 1.3rem;
+    border-radius: var(--radius);
+}
+
+.brandText {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.brandName {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Nav Group */
+.navGroup {
+    padding: 0 16px;
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    color: hsl(var(--foreground) / 0.8);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border-radius: var(--radius);
+}
+
+.navItem:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+}
+
+.navItem.active {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    font-weight: 600;
+}
+
+.navIcon {
+    color: hsl(var(--muted-foreground));
+    transition: color 0.2s ease;
+}
+
+.navItem:hover .navIcon,
+.navItem.active .navIcon {
+    color: hsl(var(--foreground));
+}
+
+/* User Section */
+.userSection {
+    margin-top: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.userMenuPopover {
+    position: absolute;
+    bottom: 16px;
+    left: calc(100% + 8px);
+    width: 240px;
+    background-color: hsl(var(--popover));
+    border: 1px solid hsl(var(--border));
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    z-index: 50;
+    animation: slideUp 0.15s ease-out;
+}
+
+.popoverHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+}
+
+.popoverActionBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: hsl(var(--foreground));
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.popoverActionBtn:hover {
+    background-color: hsl(var(--accent));
+}
+
+.popoverDivider {
+    height: 1px;
+    background-color: hsl(var(--border));
+    margin: 4px -4px;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.userProfileBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.userProfileBtn:hover,
+.userProfileBtn.active {
+    background-color: hsl(var(--accent));
+}
+
+.userAvatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+}
+
+.userName {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.userEmail {
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
+/* Content Area */
+.content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    background-color: hsl(var(--background));
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        padding-bottom: 70px;
+        /* Space for the bottom bar */
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: fixed;
+        bottom: 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        flex-direction: row;
+        border-right: none;
+        border-top: 1px solid hsl(var(--border));
+        z-index: 50;
+        background-color: hsl(var(--card));
+        padding: 8px 16px;
+        align-items: center;
+        justify-content: space-around;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+        /* Optional subtle shadow */
+    }
+
+    .sidebarHeader {
+        display: none;
+        /* Hide brand identity on mobile bottom bar */
+    }
+
+    .navGroup {
+        padding: 0;
+        margin-top: 0;
+        flex: 1;
+    }
+
+    .nav {
+        flex-direction: row;
+        justify-content: space-around;
+        gap: 0;
+    }
+
+    .navItem {
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px;
+        font-size: 0.65rem;
+        /* Smaller text for mobile */
+        text-align: center;
+        width: 100%;
+    }
+
+    .navIcon {
+        font-size: 1.2rem;
+    }
+
+    .navItem.active {
+        background-color: transparent;
+        color: hsl(var(--foreground));
+    }
+
+    .navItem.active .navIcon {
+        color: hsl(var(--primary));
+        /* Highlight icon with primary color */
+    }
+
+    .userSection {
+        margin-top: 0;
+        padding: 0 8px;
+    }
+
+    /* Hide user text details side by side */
+    .userInfo {
+        display: none;
+    }
+
+    .userProfileBtn {
+        border: none;
+        padding: 4px;
+        border-radius: 50%;
+        /* Just circle avatar */
+        justify-content: center;
+    }
+
+    .userAvatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+    }
+
+    .userMenuPopover {
+        bottom: 60px;
+        /* Popover upwards */
+        left: auto;
+        right: 16px;
+        transform-origin: bottom right;
+    }
+
+    .content {
+        padding: 24px 16px;
+    }
+}

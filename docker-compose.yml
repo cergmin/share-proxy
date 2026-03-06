@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: share_proxy
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - share_proxy_net
+
+  admin-api:
+    build:
+      context: .
+      dockerfile: apps/admin-api/Dockerfile
+    ports:
+      - "${ADMIN_API_PORT:-3000}:3000"
+    environment:
+      - DB_TYPE=postgres
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET=${SECRET}
+      - ADMIN_ORIGIN=${ADMIN_ORIGIN}
+      - PORT=3000
+      - HOST=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - share_proxy_net
+    depends_on:
+      - postgres
+
+  proxy:
+    build:
+      context: .
+      dockerfile: apps/proxy/Dockerfile
+    ports:
+      - "${PROXY_PORT:-3001}:3001"
+    environment:
+      - DB_TYPE=postgres
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=3001
+      - HOST=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - share_proxy_net
+    depends_on:
+      - postgres
+
+  admin-web:
+    build:
+      context: .
+      dockerfile: apps/admin-web/Dockerfile
+    ports:
+      - "5173:80"
+    environment:
+      - ADMIN_API_ORIGIN=http://admin-api:3000
+    restart: unless-stopped
+    networks:
+      - share_proxy_net
+
+volumes:
+  pg_data:
+
+
+networks:
+  share_proxy_net:
+    driver: bridge

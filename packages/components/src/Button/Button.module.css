@@ -1,0 +1,65 @@
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: 36px;
+    padding: 0 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+}
+
+.button[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.primary {
+    background-color: hsl(var(--foreground));
+    color: hsl(var(--background));
+}
+
+.primary.hovered {
+    opacity: 0.9;
+}
+
+.secondary {
+    background-color: transparent;
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+}
+
+.secondary.hovered {
+    background-color: hsl(var(--accent));
+}
+
+.danger {
+    background-color: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+}
+
+.danger.hovered {
+    opacity: 0.9;
+}
+
+.ghost {
+    background-color: transparent;
+    color: hsl(var(--foreground));
+}
+
+.ghost.hovered {
+    background-color: hsl(var(--accent));
+}
+
+.focused {
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
+.pressed {
+    transform: scale(0.98);
+}
