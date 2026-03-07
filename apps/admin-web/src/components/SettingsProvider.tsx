@@ -70,6 +70,7 @@ export const useSettings = () => {
 };
 
 export const getI18nLocaleFromSettings = (language: Language, dateFormat: DateFormat): string => {
+    // Date format disambiguates regional locale used by i18n formatting (e.g. en-US vs en-GB, es-US vs es-ES).
     if (language === 'es') {
         if (dateFormat === 'MM/DD/YYYY') return 'es-US';
         return 'es-ES';
