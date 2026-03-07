@@ -27,7 +27,7 @@
 - **Поведение PR:** проверки пропускаются для draft PR и запускаются после перевода в `ready_for_review`.
 - **Проверки (matrix):**
   - `pnpm lint` — запуск всех доступных линтеров в workspace-пакетах через root-скрипт.
-  - `pnpm test:ci` — запуск всех доступных package-тестов в workspace (без root-пакета, без Playwright e2e).
+  - `pnpm test:ci` — предварительная сборка внутренних пакетов `@share-proxy/core`, `@share-proxy/db`, `@share-proxy/adapters`, затем запуск всех доступных package-тестов в workspace (без root-пакета, без Playwright e2e).
 - **Runtime:** Node.js из `.nvmrc` (Node 24), pnpm `10.30.1`
 - **Установка зависимостей:** `pnpm install --frozen-lockfile`
 

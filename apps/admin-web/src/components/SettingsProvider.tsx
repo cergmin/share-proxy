@@ -32,7 +32,7 @@ export function SettingsProvider({ children, storageKey = 'share-proxy-settings'
         if (stored) {
             try {
                 return { ...initialState, ...JSON.parse(stored) };
-            } catch (e) {
+            } catch (_error) {
                 return initialState;
             }
         }
