@@ -12,7 +12,7 @@ async function fetchApi(path: string, options?: RequestInit) {
         let err;
         try {
             err = await res.json();
-        } catch (e) {
+        } catch (_error) {
             err = { error: await res.text() };
         }
         throw new Error(err.error || `HTTP ${res.status}`);

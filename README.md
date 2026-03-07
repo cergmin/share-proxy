@@ -40,6 +40,14 @@ pnpm dev
 - **Admin API** will be available at: http://localhost:3000
 - **Proxy Server** will be available at: http://localhost:3001
 
+### CI Checks
+GitHub Actions runs the same checks below on pushes and pull requests:
+```bash
+pnpm lint
+pnpm test:ci
+```
+`test:ci` runs workspace package tests and does not include Playwright E2E.
+
 ### Docker Compose
 Alternatively, if you want to test the full production-like build or use a real PostgreSQL database, you can use docker-compose:
 ```bash
