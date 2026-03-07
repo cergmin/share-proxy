@@ -69,7 +69,7 @@ jobs:
       - name: Run ${{ matrix.check }}
         run: pnpm ${{ matrix.check }}
 
-  publish-proxy-image:
+  publish-image:
     name: Publish proxy image
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
