@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import i18n from '../i18n';
 
-type Language = 'ru' | 'en';
+type Language = 'ru' | 'en' | 'es';
 type DateFormat = 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'DD/MM/YYYY';
 type TimeFormat = '12h' | '24h';
 
@@ -69,8 +69,12 @@ export const useSettings = () => {
     return context;
 };
 
-export const getLocaleFromSettings = (_lang: Language, dateFormat: DateFormat): string => {
+export const getLocaleFromSettings = (lang: Language, dateFormat: DateFormat): string => {
+    if (lang === 'es') {
+        if (dateFormat === 'MM/DD/YYYY') return 'es-US';
+        return 'es-ES';
+    }
     if (dateFormat === 'MM/DD/YYYY') return 'en-US';
     if (dateFormat === 'DD/MM/YYYY') return 'en-GB';
-    return 'ru-RU'; // DD.MM.YYYY
+    return lang === 'en' ? 'en-GB' : 'ru-RU';
 };
