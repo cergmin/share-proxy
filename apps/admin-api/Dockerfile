@@ -8,8 +8,7 @@ COPY packages ./packages
 COPY apps/admin-api ./apps/admin-api
 RUN pnpm install --frozen-lockfile
 
-WORKDIR /app/apps/admin-api
-RUN pnpm run build
+RUN pnpm --filter @share-proxy/admin-api... --if-present run build
 
 FROM base AS runner
 WORKDIR /app

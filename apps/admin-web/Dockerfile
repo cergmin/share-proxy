@@ -8,8 +8,7 @@ COPY packages ./packages
 COPY apps/admin-web ./apps/admin-web
 RUN pnpm install --frozen-lockfile
 
-WORKDIR /app/apps/admin-web
-RUN pnpm run build
+RUN pnpm --filter admin-web... --if-present run build
 
 FROM nginx:alpine AS runner
 COPY apps/admin-web/nginx.conf.template /etc/nginx/templates/default.conf.template

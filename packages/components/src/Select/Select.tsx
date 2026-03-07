@@ -9,8 +9,8 @@ import {
     Select as AriaSelect,
     SelectValue,
     Text,
-    SelectProps as AriaSelectProps,
-    ValidationResult
+    type SelectProps as AriaSelectProps,
+    type ValidationResult
 } from 'react-aria-components';
 import { MdExpandMore, MdCheck } from 'react-icons/md';
 import styles from './Select.module.css';
