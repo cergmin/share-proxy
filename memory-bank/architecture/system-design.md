@@ -30,6 +30,7 @@
   - `pnpm test:ci` — предварительная сборка внутренних пакетов `@share-proxy/core`, `@share-proxy/db`, `@share-proxy/adapters`, затем запуск всех доступных package-тестов в workspace (без root-пакета, без Playwright e2e).
 - **Runtime:** Node.js из `.nvmrc` (Node 24), pnpm `10.30.1`
 - **Установка зависимостей:** `pnpm install --frozen-lockfile`
+- **Публикация контейнера Proxy:** после успешных проверок на `push` в `main` workflow публикует Docker-образ `apps/proxy/Dockerfile` в GHCR (`ghcr.io/<owner>/<repo>`) с тегами `main` и short SHA. Публикация в Docker Hub в этом workflow не выполняется.
 
 ## База данных (Drizzle + PGLite / PostgreSQL)
 Поддержка работы как с полноценным PostgreSQL 18, так и со встраиваемым PGLite (выбирается через `DB_TYPE` в `.env`).
