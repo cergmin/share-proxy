@@ -25,6 +25,13 @@ const FlagEN = () => (
     </svg>
 );
 
+const FlagES = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="18" height="12" style={{ borderRadius: '2px' }}>
+        <rect width="3" height="2" fill="#AA151B" />
+        <rect y="0.5" width="3" height="1" fill="#F1BF00" />
+    </svg>
+);
+
 const ThemeIllustration = ({ type }: { type: 'light' | 'dark' | 'system' }) => {
     const renderWindow = (theme: 'light' | 'dark', clipId?: string) => {
         const bg = theme === 'light' ? '#f4f4f5' : '#09090b';
@@ -166,6 +173,11 @@ export function Settings() {
                     <SelectItem id="en">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <FlagEN /> <span>English</span>
+                        </div>
+                    </SelectItem>
+                    <SelectItem id="es">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FlagES /> <span>Español</span>
                         </div>
                     </SelectItem>
                 </Select>

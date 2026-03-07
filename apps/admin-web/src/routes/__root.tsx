@@ -3,12 +3,12 @@ import { Outlet, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { I18nProvider } from '@share-proxy/components'
 import { ThemeProvider } from '../components/ThemeProvider'
-import { SettingsProvider, useSettings, getLocaleFromSettings } from '../components/SettingsProvider'
+import { SettingsProvider, useSettings, resolveI18nLocale } from '../components/SettingsProvider'
 
 function AppWrapper() {
     console.log("[DEBUG] Render AppWrapper");
-    const { language, dateFormat } = useSettings();
-    const locale = getLocaleFromSettings(language, dateFormat);
+    const { dateFormat } = useSettings();
+    const locale = resolveI18nLocale({ dateFormat });
 
     return (
         <I18nProvider locale={locale}>
