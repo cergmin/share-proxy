@@ -7,8 +7,8 @@ import { SettingsProvider, useSettings, resolveI18nLocale } from '../components/
 
 function AppWrapper() {
     console.log("[DEBUG] Render AppWrapper");
-    const { language, dateFormat } = useSettings();
-    const locale = resolveI18nLocale({ language, dateFormat });
+    const { dateFormat } = useSettings();
+    const locale = resolveI18nLocale({ dateFormat });
 
     return (
         <I18nProvider locale={locale}>

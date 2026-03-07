@@ -70,16 +70,10 @@ export const useSettings = () => {
 };
 
 export const resolveI18nLocale = ({
-    language,
     dateFormat,
-}: Pick<SettingsState, 'language' | 'dateFormat'>): string => {
-    // `I18nProvider` locale drives Intl-based formatting (dates, numbers, calendar),
-    // so we derive regional locale from both selected language and date format.
-    if (language === 'es') {
-        if (dateFormat === 'MM/DD/YYYY') return 'es-US';
-        return 'es-ES';
-    }
+}: Pick<SettingsState, 'dateFormat'>): string => {
+    // Locale for `I18nProvider` is tied to formatting conventions only.
     if (dateFormat === 'MM/DD/YYYY') return 'en-US';
     if (dateFormat === 'DD/MM/YYYY') return 'en-GB';
-    return language === 'en' ? 'en-GB' : 'ru-RU';
+    return 'ru-RU';
 };
