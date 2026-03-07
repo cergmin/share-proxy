@@ -89,7 +89,7 @@ jobs:
         run: |
           OWNER_LC="${GITHUB_REPOSITORY_OWNER,,}"
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
-          GHCR_IMAGE="ghcr.io/${OWNER_LC}/${REPO_NAME}-proxy"
+          GHCR_IMAGE="ghcr.io/${OWNER_LC}/${REPO_NAME}"
 
           {
             echo "ghcr_image=${GHCR_IMAGE}"
