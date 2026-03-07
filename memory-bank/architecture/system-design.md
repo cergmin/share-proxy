@@ -6,6 +6,7 @@
 ## Стек технологий
 - **Репозиторий:** PNPM Workspaces (Monorepo)
 - **Runtime:** Node.js 24
+- **CI/CD:** GitHub Actions (проверки `pnpm lint` и `pnpm test:ci`)
 - **Backend (Admin API & Proxy):** Fastify, TypeScript
 - **Frontend (Админка):** Vite 8, React 19, TypeScript, CSS Modules
 - **База данных:** PostgreSQL 18 / PGLite (настраивается через `DB_TYPE`), Drizzle ORM
@@ -19,6 +20,16 @@
 - `packages/db/` — Схема базы данных (Drizzle ORM) и миграции. Общий пакет для admin-api и proxy.
 - `packages/adapters/` — Унифицированные адаптеры для различных источников контента (Jellyfin, S3, Google Drive).
 - `packages/core/` — Общие утилиты, типы данных, константы.
+
+## CI Pipeline (GitHub Actions)
+- **Workflow:** `.github/workflows/ci.yml`
+- **Триггеры:** `push` по веткам (без tag-пушей), `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_review`) с `paths-ignore` для документации (`*.md`, `memory-bank/**`), `merge_group` (`checks_requested`) и ручной запуск (`workflow_dispatch`)
+- **Поведение PR:** проверки пропускаются для draft PR и запускаются после перевода в `ready_for_review`.
+- **Проверки (matrix):**
+  - `pnpm lint` — запуск всех доступных линтеров в workspace-пакетах через root-скрипт.
+  - `pnpm test:ci` — запуск всех доступных package-тестов в workspace (без root-пакета, без Playwright e2e).
+- **Runtime:** Node.js из `.nvmrc` (Node 24), pnpm `10.30.1`
+- **Установка зависимостей:** `pnpm install --frozen-lockfile`
 
 ## База данных (Drizzle + PGLite / PostgreSQL)
 Поддержка работы как с полноценным PostgreSQL 18, так и со встраиваемым PGLite (выбирается через `DB_TYPE` в `.env`).
