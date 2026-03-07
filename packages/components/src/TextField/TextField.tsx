@@ -4,8 +4,8 @@ import {
     Input,
     Text,
     FieldError,
-    TextFieldProps as AriaTextFieldProps,
-    ValidationResult
+    type TextFieldProps as AriaTextFieldProps,
+    type ValidationResult
 } from 'react-aria-components';
 import styles from './TextField.module.css';
 

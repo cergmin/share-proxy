@@ -3,8 +3,8 @@ import {
     RadioGroup as AriaRadioGroup,
     Radio as AriaRadio,
     Label,
-    RadioGroupProps as AriaRadioGroupProps,
-    RadioProps as AriaRadioProps,
+    type RadioGroupProps as AriaRadioGroupProps,
+    type RadioProps as AriaRadioProps,
 } from 'react-aria-components';
 import styles from './RadioGroup.module.css';
 

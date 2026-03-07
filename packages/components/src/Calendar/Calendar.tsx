@@ -16,9 +16,9 @@ import {
     Popover,
     Text,
     FieldError,
-    DatePickerProps as AriaDatePickerProps,
-    DateValue,
-    ValidationResult
+    type DatePickerProps as AriaDatePickerProps,
+    type DateValue,
+    type ValidationResult
 } from 'react-aria-components';
 import { MdChevronLeft, MdChevronRight, MdCalendarToday } from 'react-icons/md';
 import styles from './Calendar.module.css';

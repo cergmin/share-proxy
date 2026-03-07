@@ -8,8 +8,7 @@ COPY packages ./packages
 COPY apps/proxy ./apps/proxy
 RUN pnpm install --frozen-lockfile
 
-WORKDIR /app/apps/proxy
-RUN pnpm run build
+RUN pnpm --filter @share-proxy/proxy... --if-present run build
 
 FROM base AS runner
 WORKDIR /app
