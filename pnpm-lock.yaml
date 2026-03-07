@@ -137,6 +137,9 @@ importers:
       vite:
         specifier: ^8.0.0-beta.16
         version: 8.0.0-beta.16(@types/node@24.11.0)(esbuild@0.27.3)(tsx@4.21.0)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.11.0)(lightningcss@1.31.1)
 
   apps/proxy:
     dependencies:
@@ -7157,7 +7160,6 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 5.4.21(@types/node@24.11.0)(lightningcss@1.31.1)
-    optional: true
 
   '@vitest/pretty-format@2.0.5':
     dependencies:
@@ -9093,7 +9095,6 @@ snapshots:
       - sugarss
       - supports-color
       - terser
-    optional: true
 
   vite@5.4.21(@types/node@20.19.35)(lightningcss@1.31.1):
     dependencies:
@@ -9114,7 +9115,6 @@ snapshots:
       '@types/node': 24.11.0
       fsevents: 2.3.3
       lightningcss: 1.31.1
-    optional: true
 
   vite@6.4.1(@types/node@25.3.3)(lightningcss@1.31.1)(tsx@4.21.0):
     dependencies:
@@ -9213,7 +9213,6 @@ snapshots:
       - sugarss
       - supports-color
       - terser
-    optional: true
 
   void-elements@3.1.0: {}
 
