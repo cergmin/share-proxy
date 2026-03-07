@@ -69,12 +69,12 @@ export const useSettings = () => {
     return context;
 };
 
-export const getLocaleFromSettings = (lang: Language, dateFormat: DateFormat): string => {
-    if (lang === 'es') {
+export const getI18nLocaleFromSettings = (language: Language, dateFormat: DateFormat): string => {
+    if (language === 'es') {
         if (dateFormat === 'MM/DD/YYYY') return 'es-US';
         return 'es-ES';
     }
     if (dateFormat === 'MM/DD/YYYY') return 'en-US';
     if (dateFormat === 'DD/MM/YYYY') return 'en-GB';
-    return lang === 'en' ? 'en-GB' : 'ru-RU';
+    return language === 'en' ? 'en-GB' : 'ru-RU';
 };
