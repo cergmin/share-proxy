@@ -91,9 +91,7 @@ jobs:
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
           GHCR_IMAGE="ghcr.io/${OWNER_LC}/${REPO_NAME}"
 
-          {
-            echo "ghcr_image=${GHCR_IMAGE}"
-          } >> "${GITHUB_OUTPUT}"
+          echo "ghcr_image=${GHCR_IMAGE}" >> "${GITHUB_OUTPUT}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
