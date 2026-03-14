@@ -1,0 +1,44 @@
+{
+  "name": "@share-proxy/video-player",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "pnpm build && vitest run && node scripts/assert-bundled.mjs && pnpm test:storybook",
+    "test:unit": "vitest run",
+    "test:storybook": "PLAYWRIGHT_WORKERS=${PLAYWRIGHT_WORKERS:-50%} playwright test -c playwright.config.ts",
+    "test:storybook:update": "PLAYWRIGHT_WORKERS=${PLAYWRIGHT_WORKERS:-50%} playwright test -c playwright.config.ts --update-snapshots",
+    "storybook": "STORYBOOK_DISABLE_TELEMETRY=1 storybook dev -p 6007",
+    "storybook:test": "STORYBOOK_DISABLE_TELEMETRY=1 storybook dev -p 6017 --ci",
+    "build-storybook": "STORYBOOK_DISABLE_TELEMETRY=1 storybook build"
+  },
+  "dependencies": {
+    "shaka-player": "^5.0.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@storybook/addon-docs": "10.2.17",
+    "@storybook/addon-links": "10.2.17",
+    "@storybook/web-components": "10.2.17",
+    "@storybook/web-components-vite": "10.2.17",
+    "@testing-library/jest-dom": "^6.9.1",
+    "jsdom": "^28.1.0",
+    "storybook": "10.2.17",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "vitest": "^4.1.0"
+  }
+}
