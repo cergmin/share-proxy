@@ -1,15 +1,9 @@
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import { PGlite } from '@electric-sql/pglite';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { getDb, user } from '@share-proxy/db';
 
 async function run() {
-    const dbDir = resolve(__dirname, '../../storage/db');
-    const db = new PGlite(dbDir);
-    const users = await db.query('SELECT * FROM "user"');
-    console.log(users.rows);
+    const db = await getDb();
+    const users = await db.select().from(user);
+    console.log(users);
     process.exit(0);
 }
 

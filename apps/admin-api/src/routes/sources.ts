@@ -1,7 +1,23 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { getDb, sources } from '@share-proxy/db';
 import { eq } from 'drizzle-orm';
-import { JellyfinAdapter } from '@share-proxy/adapters';
+import { hasUrlProtocol, JellyfinAdapter, JellyfinConfig, normalizeJellyfinUrl, resolveJellyfinConfig } from '@share-proxy/adapters';
+
+async function normalizeSourceConfig(type: string, config: unknown): Promise<unknown> {
+    if (type !== 'jellyfin') {
+        return config;
+    }
+
+    const jellyfinConfig = config as JellyfinConfig;
+    if (!hasUrlProtocol(jellyfinConfig.url)) {
+        return resolveJellyfinConfig(jellyfinConfig);
+    }
+
+    return {
+        ...jellyfinConfig,
+        url: normalizeJellyfinUrl(jellyfinConfig.url),
+    };
+}
 
 export const sourcesRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // @ts-ignore - Temporary ignore until better-auth context is typed inside fastify
@@ -32,9 +48,17 @@ export const sourcesRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
         try {
             if (type === 'jellyfin') {
-                const adapter = new JellyfinAdapter(config);
+                const jellyfinConfig = config as JellyfinConfig;
+                const normalizedConfig = hasUrlProtocol(jellyfinConfig.url)
+                    ? {
+                        ...jellyfinConfig,
+                        url: normalizeJellyfinUrl(jellyfinConfig.url),
+                    }
+                    : await resolveJellyfinConfig(jellyfinConfig);
+
+                const adapter = new JellyfinAdapter(normalizedConfig);
                 await adapter.initialize();
-                return reply.code(200).send({ success: true });
+                return reply.code(200).send({ success: true, config: normalizedConfig });
             }
             return reply.code(400).send({ error: "Unsupported source type for testing" });
         } catch (e: any) {
@@ -49,11 +73,12 @@ export const sourcesRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
             return reply.code(400).send({ error: "Missing fields" });
         }
 
+        const normalizedConfig = await normalizeSourceConfig(type, config);
         const db = await getDb();
         const newSource = await db.insert(sources).values({
             name,
             type,
-            config: JSON.stringify(config), // Ideally encrypt this before storing
+            config: JSON.stringify(normalizedConfig), // Ideally encrypt this before storing
         }).returning();
 
         return reply.code(201).send(newSource[0]);
@@ -80,9 +105,9 @@ export const sourcesRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
 
         const source = sourceList[0];
         try {
-            const config = JSON.parse(source.config);
+            const config = await normalizeSourceConfig(source.type, JSON.parse(source.config));
             if (source.type === 'jellyfin') {
-                const adapter = new JellyfinAdapter(config);
+                const adapter = new JellyfinAdapter(config as JellyfinConfig);
                 const tree = await adapter.listDirectory(parentId);
                 return reply.code(200).send(tree);
             }
@@ -101,16 +126,18 @@ export const sourcesRoutes: FastifyPluginAsync = async (fastify: FastifyInstance
         }
 
         const db = await getDb();
+        const existingSource = await db.select({ id: sources.id }).from(sources).where(eq(sources.id, id)).limit(1);
+        if (!existingSource.length) {
+            return reply.code(404).send({ error: "Source not found" });
+        }
+
+        const normalizedConfig = await normalizeSourceConfig(type, config);
         const updatedSource = await db.update(sources).set({
             name,
             type,
-            config: typeof config === 'string' ? config : JSON.stringify(config),
+            config: typeof normalizedConfig === 'string' ? normalizedConfig : JSON.stringify(normalizedConfig),
             updatedAt: new Date()
         }).where(eq(sources.id, id)).returning();
-
-        if (!updatedSource.length) {
-            return reply.code(404).send({ error: "Source not found" });
-        }
 
         return reply.code(200).send(updatedSource[0]);
     });

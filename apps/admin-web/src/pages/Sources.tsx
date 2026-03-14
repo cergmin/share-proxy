@@ -52,10 +52,13 @@ export function Sources() {
         setIsTesting(true);
         try {
             const compiledConfig = { url, apiKey };
-            await api.post('/api/sources/test', {
+            const response = await api.post('/api/sources/test', {
                 type,
                 config: compiledConfig
             });
+            if (response?.config?.url) {
+                setUrl(response.config.url);
+            }
             setAlertState({ isOpen: true, message: t('connection_success'), title: 'Success' });
         } catch (e: any) {
             setAlertState({ isOpen: true, message: t('connection_failed') + e.message, title: 'Error' });
@@ -117,7 +120,7 @@ export function Sources() {
     const openNew = () => {
         setName('');
         setType('jellyfin');
-        setUrl('http://');
+        setUrl('');
         setApiKey('');
         setEditingId(null);
         setView('form');

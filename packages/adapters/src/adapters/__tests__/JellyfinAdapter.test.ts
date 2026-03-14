@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { JellyfinAdapter } from '../JellyfinAdapter.js';
+import { getJellyfinUrlCandidates, JellyfinAdapter, normalizeJellyfinUrl, resolveJellyfinConfig } from '../JellyfinAdapter.js';
 
 
 // ---------------------------------------------------------------------------
@@ -53,6 +53,32 @@ describe('JellyfinAdapter', () => {
 
     afterEach(() => {
         vi.unstubAllGlobals();
+    });
+
+    // -----------------------------------------------------------------------
+    describe('URL helpers', () => {
+        it('builds https and http candidates when protocol is missing', () => {
+            expect(getJellyfinUrlCandidates('jf.local:8096/')).toEqual([
+                'https://jf.local:8096',
+                'http://jf.local:8096',
+            ]);
+        });
+
+        it('keeps protocol when it is already provided', () => {
+            expect(getJellyfinUrlCandidates('http://jf.local:8096/')).toEqual(['http://jf.local:8096']);
+            expect(normalizeJellyfinUrl('https://jf.local:8096/')).toBe('https://jf.local:8096');
+        });
+
+        it('resolves protocol-less config by trying https then http', async () => {
+            fetchMock
+                .mockResolvedValueOnce({ ok: false, status: 502, statusText: 'Bad Gateway', headers: { get: () => null }, json: async () => ({}) })
+                .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', headers: { get: () => null }, json: async () => ({}) });
+
+            const result = await resolveJellyfinConfig({ url: 'jf.local:8096/', apiKey: 'secret-key' });
+            expect(result.url).toBe('http://jf.local:8096');
+            expect(fetchMock.mock.calls[0][0]).toBe('https://jf.local:8096/System/Info');
+            expect(fetchMock.mock.calls[1][0]).toBe('http://jf.local:8096/System/Info');
+        });
     });
 
     // -----------------------------------------------------------------------
@@ -205,10 +231,11 @@ describe('JellyfinAdapter', () => {
             ok?: boolean;
             status?: number;
             contentLength?: string;
+            contentRange?: string;
             contentType?: string;
             acceptRanges?: string;
         } = {}) {
-            const { ok = true, status = 200, contentLength = '1024', contentType = 'video/mp4', acceptRanges = 'bytes' } = opts;
+            const { ok = true, status = 200, contentLength = '1024', contentRange, contentType = 'video/mp4', acceptRanges = 'bytes' } = opts;
             // Use a real WHATWG ReadableStream — Readable.fromWeb() requires it
             const fakeBody = new ReadableStream({
                 start(controller) { controller.close(); }
@@ -220,6 +247,7 @@ describe('JellyfinAdapter', () => {
                 headers: {
                     get: (k: string) => {
                         if (k === 'content-length') return contentLength;
+                        if (k === 'content-range') return contentRange ?? null;
                         if (k === 'content-type') return contentType;
                         if (k === 'accept-ranges') return acceptRanges;
                         return null;
@@ -277,7 +305,7 @@ describe('JellyfinAdapter', () => {
             makeStreamFetch({ contentLength: '2048' });
             const adapter = new JellyfinAdapter(BASE_CONFIG);
             const result = await adapter.getFileStream('file-abc');
-            expect(result.size).toBe(2048);
+            expect(result.contentLength).toBe(2048);
         });
 
         it('returns correct mimeType from content-type', async () => {
@@ -298,6 +326,124 @@ describe('JellyfinAdapter', () => {
             const adapter = new JellyfinAdapter(BASE_CONFIG);
             await adapter.getFileStream('my-file-id');
             expect(fetchMock.mock.calls[0][0]).toBe('http://jellyfin.local:8096/Items/my-file-id/Download');
+        });
+
+        it('returns statusCode and contentRange for partial content', async () => {
+            makeStreamFetch({ status: 206, contentRange: 'bytes 0-99/1000' });
+            const adapter = new JellyfinAdapter(BASE_CONFIG);
+            const result = await adapter.getFileStream('partial-file');
+            expect(result.statusCode).toBe(206);
+            expect(result.contentRange).toBe('bytes 0-99/1000');
+        });
+
+        it('falls back to the direct-play video endpoint when Download returns 400', async () => {
+            fetchMock
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 400,
+                    statusText: 'Bad Request',
+                    headers: { get: () => null },
+                    body: null,
+                    json: async () => ({}),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { get: () => null },
+                    json: async () => USERS_RESPONSE,
+                    body: null,
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { get: () => null },
+                    json: async () => ({
+                        MediaSources: [{ Id: 'media-source-123' }],
+                    }),
+                    body: null,
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: {
+                        get: (k: string) => {
+                            if (k === 'content-length') return '1024';
+                            if (k === 'content-type') return 'video/mp4';
+                            if (k === 'accept-ranges') return 'bytes';
+                            return null;
+                        },
+                    },
+                    body: new ReadableStream({
+                        start(controller) { controller.close(); }
+                    }),
+                    json: async () => ({}),
+                });
+
+            const adapter = new JellyfinAdapter(BASE_CONFIG);
+            await adapter.getFileStream('my-file-id');
+
+            expect(fetchMock.mock.calls[0][0]).toBe('http://jellyfin.local:8096/Items/my-file-id/Download');
+            expect(fetchMock.mock.calls[1][0]).toBe('http://jellyfin.local:8096/Users');
+            expect(fetchMock.mock.calls[2][0]).toBe('http://jellyfin.local:8096/Users/admin-id/Items/my-file-id');
+            expect(fetchMock.mock.calls[3][0]).toContain('http://jellyfin.local:8096/Videos/my-file-id/stream?');
+            expect(fetchMock.mock.calls[3][0]).toContain('Static=true');
+            expect(fetchMock.mock.calls[3][0]).toContain('mediaSourceId=media-source-123');
+            expect(fetchMock.mock.calls[3][0]).toContain('userId=admin-id');
+        });
+
+        it('retries direct-play without mediaSourceId when item metadata is unavailable', async () => {
+            fetchMock
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 400,
+                    statusText: 'Bad Request',
+                    headers: { get: () => null },
+                    body: null,
+                    json: async () => ({}),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { get: () => null },
+                    json: async () => USERS_RESPONSE,
+                    body: null,
+                })
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 404,
+                    statusText: 'Not Found',
+                    headers: { get: () => null },
+                    json: async () => ({}),
+                    body: null,
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: {
+                        get: (k: string) => {
+                            if (k === 'content-length') return '1024';
+                            if (k === 'content-type') return 'video/mp4';
+                            if (k === 'accept-ranges') return 'bytes';
+                            return null;
+                        },
+                    },
+                    body: new ReadableStream({
+                        start(controller) { controller.close(); }
+                    }),
+                    json: async () => ({}),
+                });
+
+            const adapter = new JellyfinAdapter(BASE_CONFIG);
+            await adapter.getFileStream('my-file-id');
+
+            expect(fetchMock.mock.calls[2][0]).toBe('http://jellyfin.local:8096/Users/admin-id/Items/my-file-id');
+            expect(fetchMock.mock.calls[3][0]).toContain('http://jellyfin.local:8096/Videos/my-file-id/stream?');
+            expect(fetchMock.mock.calls[3][0]).not.toContain('mediaSourceId=');
         });
     });
 });

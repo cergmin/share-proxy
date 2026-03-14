@@ -2,8 +2,7 @@
  * Test helper: builds a Fastify instance with Sources and Links routes registered,
  * but WITHOUT authentication middleware — suitable for unit/integration testing.
  *
- * Uses the same DB module as production code, so test setup must call
- * initTestDb() from this module first to point getDb() at a fresh in-memory DB.
+ * Uses the same PostgreSQL-backed DB module as production code.
  */
 import Fastify, { FastifyInstance } from 'fastify';
 import { sourcesRoutes } from '../src/routes/sources.js';

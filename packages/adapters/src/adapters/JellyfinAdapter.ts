@@ -6,6 +6,54 @@ export interface JellyfinConfig {
     userId?: string;
 }
 
+export function hasUrlProtocol(value: string): boolean {
+    return /^[a-z][a-z0-9+.-]*:\/\//i.test(value);
+}
+
+export function normalizeJellyfinUrl(value: string): string {
+    return value.trim().replace(/\/+$/, '');
+}
+
+export function getJellyfinUrlCandidates(value: string): string[] {
+    const normalized = normalizeJellyfinUrl(value);
+    if (!normalized) {
+        return [];
+    }
+
+    if (hasUrlProtocol(normalized)) {
+        return [normalized];
+    }
+
+    return [`https://${normalized}`, `http://${normalized}`];
+}
+
+export async function resolveJellyfinConfig(
+    config: JellyfinConfig,
+): Promise<JellyfinConfig> {
+    const candidates = getJellyfinUrlCandidates(config.url);
+    let lastError: unknown;
+
+    for (const candidate of candidates) {
+        const resolvedConfig = {
+            ...config,
+            url: candidate,
+        };
+
+        try {
+            const adapter = new JellyfinAdapter(resolvedConfig);
+            await adapter.initialize();
+            return {
+                ...resolvedConfig,
+                url: normalizeJellyfinUrl(candidate),
+            };
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError ?? new Error('Failed to resolve Jellyfin URL');
+}
+
 export class JellyfinAdapter implements StorageAdapter<JellyfinConfig> {
     constructor(public config: JellyfinConfig) { }
 
@@ -78,14 +126,37 @@ export class JellyfinAdapter implements StorageAdapter<JellyfinConfig> {
         });
     }
 
+    private async resolvePlaybackMetadata(
+        fileId: string,
+    ): Promise<{ mediaSourceId?: string; userId?: string }> {
+        const userId = await this.resolveUserId().catch(() => undefined);
+
+        if (!userId) {
+            return {};
+        }
+
+        try {
+            const item = await this.request(`/Users/${userId}/Items/${fileId}`);
+            const mediaSourceId = Array.isArray(item?.MediaSources) && item.MediaSources.length > 0
+                ? item.MediaSources[0]?.Id
+                : undefined;
+
+            return { userId, mediaSourceId };
+        } catch {
+            return { userId };
+        }
+    }
+
     async getFileStream(
         fileId: string,
         range?: { start: number; end?: number },
     ): Promise<{
-        stream: import('stream').Readable;
-        size: number;
-        mimeType: string;
         acceptRanges: 'bytes' | 'none';
+        contentLength: number;
+        contentRange?: string;
+        mimeType: string;
+        statusCode: number;
+        stream: import('stream').Readable;
     }> {
         const headers: Record<string, string> = {
             'X-Emby-Token': this.config.apiKey,
@@ -94,7 +165,50 @@ export class JellyfinAdapter implements StorageAdapter<JellyfinConfig> {
             headers['Range'] = `bytes=${range.start}-${range.end ?? ''}`;
         }
 
-        const res = await fetch(`${this.baseUrl}/Items/${fileId}/Download`, { headers });
+        const fetchStreamResponse = async (url: string) => fetch(url, { headers });
+
+        let res = await fetchStreamResponse(`${this.baseUrl}/Items/${fileId}/Download`);
+
+        // Some Jellyfin installations reject the download endpoint for direct playback items
+        // but accept the direct-play video endpoint that the official clients use.
+        if (res.status === 400) {
+            const playbackMetadata = await this.resolvePlaybackMetadata(fileId);
+            const paramCandidates: Array<Record<string, string>> = [];
+            const baseParams: Record<string, string> = {
+                Static: 'true',
+                api_key: this.config.apiKey,
+                deviceId: 'share-proxy',
+            };
+
+            if (playbackMetadata.userId) {
+                baseParams.userId = playbackMetadata.userId;
+            }
+
+            if (playbackMetadata.mediaSourceId) {
+                paramCandidates.push({
+                    ...baseParams,
+                    mediaSourceId: playbackMetadata.mediaSourceId,
+                });
+            }
+
+            paramCandidates.push(baseParams);
+
+            if (!playbackMetadata.mediaSourceId) {
+                paramCandidates.push({
+                    ...baseParams,
+                    mediaSourceId: fileId,
+                });
+            }
+
+            for (const paramsObject of paramCandidates) {
+                const params = new URLSearchParams(paramsObject);
+                res = await fetchStreamResponse(`${this.baseUrl}/Videos/${fileId}/stream?${params.toString()}`);
+                if (res.ok || res.status !== 400) {
+                    break;
+                }
+            }
+        }
+
         if (!res.ok) {
             throw new Error(`Jellyfin stream error: ${res.status} ${res.statusText}`);
         }
@@ -105,10 +219,18 @@ export class JellyfinAdapter implements StorageAdapter<JellyfinConfig> {
         const contentLength = Number(res.headers.get('content-length') ?? 0);
         const mimeType = res.headers.get('content-type') ?? 'application/octet-stream';
         const acceptRanges = res.headers.get('accept-ranges') === 'bytes' ? 'bytes' : 'none';
+        const contentRange = res.headers.get('content-range') ?? undefined;
 
         const { Readable } = await import('stream');
         const stream = Readable.fromWeb(res.body as any);
 
-        return { stream, size: contentLength, mimeType, acceptRanges };
+        return {
+            stream,
+            statusCode: res.status,
+            contentLength,
+            contentRange,
+            mimeType,
+            acceptRanges,
+        };
     }
 }
