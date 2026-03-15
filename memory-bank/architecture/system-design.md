@@ -9,7 +9,7 @@
 - **CI/CD:** GitHub Actions (проверки `pnpm lint` и `pnpm test:ci`)
 - **Backend (Admin API & Proxy):** Fastify 5, TypeScript 5.9
 - **Frontend (Админка):** Vite 8, React 19, TypeScript 5.9, CSS Modules
-- **База данных:** PostgreSQL 17, Drizzle ORM 0.45
+- **База данных:** PostgreSQL 18, Drizzle ORM 0.45
 - **Аутентификация (Админка):** BetterAuth 1.5
 - **Тесты:** Vitest 4, Playwright 1.58
 - **Storybook:** Storybook 10 для `packages/components` и `packages/video-player`
@@ -42,12 +42,12 @@
 - **Публикация контейнера Proxy:** после успешных проверок на `push` в `main` workflow публикует Docker-образ `apps/proxy/Dockerfile` в GHCR (`ghcr.io/<owner>/<repo>`) с тегами `main` и short SHA. Публикация в Docker Hub в этом workflow не выполняется.
 
 ## База данных (Drizzle + PostgreSQL)
-Единственный поддерживаемый runtime-режим базы данных — полноценный PostgreSQL 17.
+Единственный поддерживаемый runtime-режим базы данных — полноценный PostgreSQL 18.
 
 Важно для локальной разработки:
 - `pnpm dev`, `pnpm dev:admin`, `pnpm test:ci` и package-level backend tests сначала пытаются использовать уже reachable PostgreSQL из `DATABASE_URL`; только если он недоступен, `scripts/ensure-postgres.mjs` поднимает bundled `docker compose up -d --wait postgres`.
 - Postgres-контейнер использует bind mount из `POSTGRES_DATA_DIR`, чтобы локальные файлы БД хранились в предсказуемом каталоге на хосте.
-- `POSTGRES_DATA_DIR` является root-каталогом postgres storage layout; сам кластер хранится внутри versioned subdirectory (`17/docker` для текущего dev-образа).
+- `POSTGRES_DATA_DIR` указывает прямо на каталог postgres data directory.
 - Если в `POSTGRES_DATA_DIR` найден несовместимый локальный postgres cluster, `scripts/ensure-postgres.mjs` автоматически переносит его в sibling backup-каталог (`<POSTGRES_DATA_DIR>-backups/...`) и инициализирует свежий dev cluster.
 - Все backend-сервисы (`admin-api`, `proxy`) и тесты используют один и тот же `DATABASE_URL`.
 Основные сущности:

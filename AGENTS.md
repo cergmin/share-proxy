@@ -11,7 +11,7 @@
    - PNPM Workspaces.
    - Fastify (for Admin API and Proxy).
     - Vite 8 + React 19 + CSS Modules (Admin Web).
-   - Drizzle ORM + PostgreSQL 17.
+   - Drizzle ORM + PostgreSQL 18.
    - BetterAuth for Auth logic.
    - Unified Env setup (`SECRET`, `ADMIN_API_ORIGIN`, `ADMIN_FRONTEND_ORIGIN`, `DATABASE_URL`, `POSTGRES_DATA_DIR`, `PROXY_ORIGIN`).
 

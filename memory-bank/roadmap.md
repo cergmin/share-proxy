@@ -6,7 +6,7 @@
 - **База Данных:** Проектирование и настройка `packages/db` с использованием Drizzle ORM и PostgreSQL.
   - `PGLite` полностью удален из runtime/dev-контура; локальная разработка и тесты используют PostgreSQL.
   - `pnpm dev` автоматически поднимает postgres-контейнер и хранит его файлы в каталоге из `POSTGRES_DATA_DIR`.
-  - `POSTGRES_DATA_DIR` используется как host root для versioned postgres layout (`17/docker` в текущем dev-контуре); если найден несовместимый локальный cluster, он автоматически уезжает в sibling `*-backups` каталог, после чего инициализируется свежий dev cluster.
+  - `POSTGRES_DATA_DIR` указывает прямо на postgres data directory; если найден несовместимый локальный cluster, он автоматически уезжает в sibling `*-backups` каталог, после чего инициализируется свежий dev cluster.
   - `scripts/ensure-postgres.mjs` теперь сначала пытается использовать уже reachable PostgreSQL из `DATABASE_URL`, и только если он недоступен, поднимает bundled Docker Postgres как fallback.
 - **Аутентификация:** Внедрение BetterAuth в `admin-api` и `admin-web`.
 - **Адаптеры:** Создание `packages/adapters` с единым интерфейсом. Разработка **Jellyfin Adapter**.

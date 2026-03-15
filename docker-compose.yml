@@ -1,15 +1,14 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: share_proxy
-      PGDATA: /var/lib/postgresql/${POSTGRES_MAJOR:-17}/docker
     ports:
       - "5432:5432"
     volumes:
-      - ${POSTGRES_DATA_DIR:-./storage/db}:/var/lib/postgresql
+      - ${POSTGRES_DATA_DIR:-./storage/db}:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d share_proxy"]
       interval: 2s

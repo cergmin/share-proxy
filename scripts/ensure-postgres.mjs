@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createConnection } from 'node:net';
@@ -34,96 +34,11 @@ const mergedEnv = {
     ...fileEnv,
 };
 
-const postgresDataRoot = resolve(rootDir, mergedEnv.POSTGRES_DATA_DIR || './storage/db');
-const postgresMajor = mergedEnv.POSTGRES_MAJOR || '17';
-const postgresDataDir = resolve(postgresDataRoot, postgresMajor, 'docker');
-const postgresBackupRoot = resolve(postgresDataRoot, '..', `${basename(postgresDataRoot)}-backups`);
+const postgresDataDir = resolve(rootDir, mergedEnv.POSTGRES_DATA_DIR || './storage/db');
+const postgresBackupRoot = resolve(dirname(postgresDataDir), `${basename(postgresDataDir)}-backups`);
 
-function hasLegacyPostgresLayout(dirPath) {
+function hasPostgresClusterLayout(dirPath) {
     return ['PG_VERSION', 'base', 'global'].some((entry) => existsSync(resolve(dirPath, entry)));
-}
-
-function hasExpectedPostgresLayout(dirPath) {
-    return ['PG_VERSION', 'base', 'global'].some((entry) => existsSync(resolve(dirPath, entry)));
-}
-
-function readPgVersion(dirPath) {
-    const versionPath = resolve(dirPath, 'PG_VERSION');
-    if (!existsSync(versionPath)) {
-        return null;
-    }
-    return readFileSync(versionPath, 'utf8').trim();
-}
-
-function migrateLegacyPostgresLayout(rootPath, targetPath) {
-    const legacyEntries = readdirSync(rootPath).filter((entry) => entry !== '18');
-    if (legacyEntries.length === 0) {
-        return;
-    }
-
-    if (existsSync(targetPath) && readdirSync(targetPath).length > 0) {
-        throw new Error(
-            `POSTGRES_DATA_DIR at ${rootPath} contains both legacy root-level postgres files and ${targetPath}. ` +
-                'Please clean up the directory manually before continuing.',
-        );
-    }
-
-    mkdirSync(targetPath, { recursive: true });
-    for (const entry of legacyEntries) {
-        renameSync(resolve(rootPath, entry), resolve(targetPath, entry));
-    }
-}
-
-function migrateVersionedPostgresLayout(rootPath, desiredMajor, targetPath) {
-    if (hasExpectedPostgresLayout(targetPath)) {
-        return;
-    }
-
-    const versionDirs = readdirSync(rootPath, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name)
-        .filter((entry) => entry !== desiredMajor && /^\d+$/.test(entry));
-
-    for (const versionDir of versionDirs) {
-        const candidatePath = resolve(rootPath, versionDir, 'docker');
-        if (readPgVersion(candidatePath) !== desiredMajor) {
-            continue;
-        }
-
-        mkdirSync(targetPath, { recursive: true });
-        for (const entry of readdirSync(candidatePath)) {
-            renameSync(resolve(candidatePath, entry), resolve(targetPath, entry));
-        }
-        return;
-    }
-}
-
-function relocateBackupDirs(rootPath, backupRoot) {
-    mkdirSync(backupRoot, { recursive: true });
-
-    const backupDirs = readdirSync(rootPath, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && entry.name.startsWith('backup-'))
-        .map((entry) => entry.name);
-
-    for (const backupDir of backupDirs) {
-        const source = resolve(rootPath, backupDir);
-        const target = resolve(backupRoot, backupDir);
-        if (!existsSync(target)) {
-            renameSync(source, target);
-            continue;
-        }
-
-        renameSync(source, resolve(backupRoot, `${backupDir}-${Date.now()}`));
-    }
-}
-
-mkdirSync(postgresDataRoot, { recursive: true });
-relocateBackupDirs(postgresDataRoot, postgresBackupRoot);
-
-migrateVersionedPostgresLayout(postgresDataRoot, postgresMajor, postgresDataDir);
-
-if (hasLegacyPostgresLayout(postgresDataRoot) && !hasExpectedPostgresLayout(postgresDataDir)) {
-    migrateLegacyPostgresLayout(postgresDataRoot, postgresDataDir);
 }
 
 mkdirSync(postgresDataDir, { recursive: true });
@@ -213,8 +128,7 @@ function isIncompatibleDataDir(logs) {
 }
 
 function archiveIncompatibleDataDir() {
-    const versionRoot = resolve(postgresDataRoot, postgresMajor);
-    const backupDir = resolve(postgresBackupRoot, `backup-${postgresMajor}-${Date.now()}`);
+    const backupDir = resolve(postgresBackupRoot, `backup-${Date.now()}`);
 
     spawnSync('docker', ['compose', 'rm', '-sf', 'postgres'], {
         cwd: rootDir,
@@ -222,9 +136,9 @@ function archiveIncompatibleDataDir() {
         stdio: 'inherit',
     });
 
-    if (existsSync(versionRoot)) {
+    if (existsSync(postgresDataDir)) {
         mkdirSync(postgresBackupRoot, { recursive: true });
-        renameSync(versionRoot, backupDir);
+        renameSync(postgresDataDir, backupDir);
     }
 
     mkdirSync(postgresDataDir, { recursive: true });
@@ -237,7 +151,7 @@ let compose = startPostgres();
 
 if (compose.status !== 0) {
     const logs = readPostgresLogs();
-    if (isIncompatibleDataDir(logs) && hasExpectedPostgresLayout(postgresDataDir)) {
+    if (isIncompatibleDataDir(logs) && hasPostgresClusterLayout(postgresDataDir)) {
         archiveIncompatibleDataDir();
         compose = startPostgres();
     }

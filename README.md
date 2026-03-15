@@ -13,7 +13,7 @@ You are free to self-host and modify this software for personal or internal busi
 ### Prerequisites
 - [Node.js 24+](https://nodejs.org/) (use `nvm use` based on `.nvmrc`)
 - [pnpm](https://pnpm.io/)
-- PostgreSQL 17+ reachable through `DATABASE_URL`, or [Docker](https://www.docker.com/) for the bundled local PostgreSQL container
+- PostgreSQL 18+ reachable through `DATABASE_URL`, or [Docker](https://www.docker.com/) for the bundled local PostgreSQL container
 
 ### First-Time Setup
 1. **Install Dependencies**
@@ -24,7 +24,7 @@ You are free to self-host and modify this software for personal or internal busi
    ```bash
    cp .env.example .env
    ```
-   *The project uses PostgreSQL only. If `DATABASE_URL` already points to a reachable PostgreSQL instance, local commands reuse it directly. Otherwise `pnpm dev` and `pnpm test` automatically start the bundled local postgres container. `POSTGRES_DATA_DIR` is the host root for the postgres cluster layout (for example `.../17/docker`). If an old incompatible local cluster is found, it is moved into a sibling `*-backups` directory and a fresh cluster is initialized.*
+   *The project uses PostgreSQL only. If `DATABASE_URL` already points to a reachable PostgreSQL instance, local commands reuse it directly. Otherwise `pnpm dev` and `pnpm test` automatically start the bundled local postgres container. `POSTGRES_DATA_DIR` points directly at the postgres data directory. If an old incompatible local cluster is found, it is moved into a sibling `*-backups` directory and a fresh cluster is initialized.*
 
 3. **Database Migrations**
    ```bash
