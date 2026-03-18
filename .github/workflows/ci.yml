@@ -66,6 +66,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright browsers
+        if: matrix.check == 'test:ci'
+        run: pnpm --filter @share-proxy/video-player exec playwright install --with-deps chromium chromium-headless-shell
+
       - name: Run ${{ matrix.check }}
         run: pnpm ${{ matrix.check }}
 

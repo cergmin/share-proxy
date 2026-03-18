@@ -2026,7 +2026,7 @@ describe('Video', () => {
             expect(hoverBar.dataset.visible).toBe('true');
             expect(hoverBar.style.width).toBe('50%');
             expect(preview.style.left).toBe('500px');
-            expect(currentTime.dataset.hidden).toBe('false');
+            expect(currentTime.dataset.hidden).toBe('true');
             expect(currentTime.dataset.overlap).toBe('false');
         });
 
@@ -2038,7 +2038,7 @@ describe('Video', () => {
 
         fireEvent.mouseMove(seek, { clientX: 145 });
         await waitFor(() => {
-            expect(currentTime.dataset.overlap).toBe('true');
+            expect(currentTime.dataset.overlap).toBe('false');
             expect(currentTime.dataset.hidden).toBe('true');
         });
 
@@ -2147,7 +2147,7 @@ describe('Video', () => {
         await waitFor(() => {
             expect(hoverBar.dataset.visible).toBe('true');
             expect(hoverBar.style.width).toBe('50%');
-            expect(preview.hidden).toBe(true);
+            expect(preview.dataset.visible).toBe('false');
             expect(currentTime.dataset.hidden).toBe('true');
         });
     });

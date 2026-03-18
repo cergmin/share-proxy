@@ -19,6 +19,6 @@ describe('SpvpTimelineElement', () => {
         expect(timeline.refs.progressInput).toBeTruthy();
         expect(timeline.refs.progressInput.getAttribute('aria-label')).toBe('Seek');
         expect(timeline.refs.currentTimeBadge.textContent).toBe('0:00');
-        expect(timeline.refs.preview.hidden).toBe(true);
+        expect(timeline.refs.preview.getAttribute('data-visible')).toBe('false');
     });
 });
