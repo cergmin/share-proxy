@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:18-alpine
@@ -10,7 +8,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - ${POSTGRES_DATA_DIR:-./storage/db}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d share_proxy"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
     networks:
       - share_proxy_net
 
@@ -21,10 +24,9 @@ services:
     ports:
       - "${ADMIN_API_PORT:-3000}:3000"
     environment:
-      - DB_TYPE=postgres
       - DATABASE_URL=${DATABASE_URL}
-      - SECRET=${SECRET}
-      - ADMIN_ORIGIN=${ADMIN_ORIGIN}
+      - SECRET=${SECRET:-}
+      - ADMIN_ORIGIN=${ADMIN_ORIGIN:-}
       - PORT=3000
       - HOST=0.0.0.0
     restart: unless-stopped
@@ -40,7 +42,6 @@ services:
     ports:
       - "${PROXY_PORT:-3001}:3001"
     environment:
-      - DB_TYPE=postgres
       - DATABASE_URL=${DATABASE_URL}
       - PORT=3001
       - HOST=0.0.0.0
@@ -61,10 +62,6 @@ services:
     restart: unless-stopped
     networks:
       - share_proxy_net
-
-volumes:
-  pg_data:
-
 
 networks:
   share_proxy_net:

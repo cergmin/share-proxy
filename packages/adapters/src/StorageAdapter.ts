@@ -19,9 +19,11 @@ export interface StorageAdapter<TConfig extends Record<string, any>> {
 
     // Returns a readable stream of the file, taking range into account
     getFileStream(fileId: string, range?: { start: number; end?: number }): Promise<{
-        stream: NodeJS.ReadableStream;
-        size: number;
-        mimeType: string;
         acceptRanges: 'bytes' | 'none';
+        contentLength: number;
+        contentRange?: string;
+        mimeType: string;
+        statusCode: number;
+        stream: NodeJS.ReadableStream;
     }>;
 }

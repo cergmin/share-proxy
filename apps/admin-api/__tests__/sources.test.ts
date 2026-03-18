@@ -3,28 +3,27 @@ import { buildApp } from './buildApp.js';
 import { clearDatabase } from './clearDatabase.js';
 import type { FastifyInstance } from 'fastify';
 
-// ---------------------------------------------------------------------------
-// Reset DB singleton between tests by clearing the module cache
-// ---------------------------------------------------------------------------
-async function resetDb() {
-    // Force @share-proxy/db to create a fresh in-memory PGLite instance
-    const dbMod = await import('@share-proxy/db');
-    // @ts-ignore — patch internal singleton
-    (dbMod as any).__resetDbInstance?.();
-}
-
 describe('Sources API', () => {
     let app: FastifyInstance;
 
     beforeEach(async () => {
-        process.env.DB_TYPE = 'pglite';
-        process.env.PGLITE_DIR = 'memory://';
+        process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/share_proxy';
         app = await buildApp();
         await clearDatabase();
     });
 
     afterEach(async () => {
         await app.close();
+    });
+
+    it('responds on the root route for manual service checks', async () => {
+        const res = await app.inject({ method: 'GET', url: '/' });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toEqual({
+            service: 'admin-api',
+            status: 'ok',
+        });
     });
 
     // -----------------------------------------------------------------------
@@ -63,6 +62,38 @@ describe('Sources API', () => {
             const body = res.json();
             expect(body).toMatchObject({ name: 'Test Source', type: 'jellyfin' });
             expect(body.id).toBeTruthy();
+        });
+
+        it('normalizes a Jellyfin URL without protocol before saving', async () => {
+            const fetchMock = vi.fn()
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 502,
+                    statusText: 'Bad Gateway',
+                    headers: { get: () => null },
+                    json: async () => ({}),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { get: () => null },
+                    json: async () => ({ ServerName: 'Test' }),
+                });
+            vi.stubGlobal('fetch', fetchMock);
+
+            const res = await app.inject({
+                method: 'POST',
+                url: '/api/sources',
+                payload: { name: 'Test Source', type: 'jellyfin', config: { url: 'jf.local:8096', apiKey: 'key' } },
+            });
+
+            expect(res.statusCode).toBe(201);
+            expect(fetchMock.mock.calls[0][0]).toBe('https://jf.local:8096/System/Info');
+            expect(fetchMock.mock.calls[1][0]).toBe('http://jf.local:8096/System/Info');
+            expect(JSON.parse(res.json().config)).toMatchObject({ url: 'http://jf.local:8096' });
+
+            vi.unstubAllGlobals();
         });
 
         it('returns 400 when name is missing', async () => {
@@ -110,6 +141,44 @@ describe('Sources API', () => {
             });
             expect(res.statusCode).toBe(200);
             expect(res.json()).toMatchObject({ id, name: 'Updated' });
+        });
+
+        it('normalizes Jellyfin URL without protocol on update', async () => {
+            const created = await app.inject({
+                method: 'POST',
+                url: '/api/sources',
+                payload: { name: 'Original', type: 'jellyfin', config: { url: 'http://jf.local', apiKey: 'k' } },
+            });
+            const { id } = created.json();
+
+            const fetchMock = vi.fn()
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 502,
+                    statusText: 'Bad Gateway',
+                    headers: { get: () => null },
+                    json: async () => ({}),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { get: () => null },
+                    json: async () => ({ ServerName: 'Test' }),
+                });
+            vi.stubGlobal('fetch', fetchMock);
+
+            const res = await app.inject({
+                method: 'PUT',
+                url: `/api/sources/${id}`,
+                payload: { name: 'Updated', type: 'jellyfin', config: { url: 'new-jf.local:8096', apiKey: 'k' } },
+            });
+            expect(res.statusCode).toBe(200);
+            expect(fetchMock.mock.calls[0][0]).toBe('https://new-jf.local:8096/System/Info');
+            expect(fetchMock.mock.calls[1][0]).toBe('http://new-jf.local:8096/System/Info');
+            expect(JSON.parse(res.json().config)).toMatchObject({ url: 'http://new-jf.local:8096' });
+
+            vi.unstubAllGlobals();
         });
 
         it('returns 404 when source not found', async () => {
@@ -203,7 +272,49 @@ describe('Sources API', () => {
                 payload: { type: 'jellyfin', config: { url: 'http://jf.local', apiKey: 'valid-key' } },
             });
             expect(res.statusCode).toBe(200);
-            expect(res.json()).toEqual({ success: true });
+            expect(res.json()).toEqual({ success: true, config: { url: 'http://jf.local', apiKey: 'valid-key' } });
+
+            vi.unstubAllGlobals();
+        });
+
+        it('tries https and then http when Jellyfin URL has no protocol', async () => {
+            const fetchMock = vi.fn()
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 502,
+                    statusText: 'Bad Gateway',
+                    headers: { get: () => null },
+                    json: async () => ({}),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { get: () => null },
+                    json: async () => ({ ServerName: 'Test' }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    statusText: 'OK',
+                    headers: { get: () => null },
+                    json: async () => ({ ServerName: 'Test' }),
+                });
+            vi.stubGlobal('fetch', fetchMock);
+
+            const res = await app.inject({
+                method: 'POST',
+                url: '/api/sources/test',
+                payload: { type: 'jellyfin', config: { url: 'jf.local:8096', apiKey: 'valid-key' } },
+            });
+            expect(res.statusCode).toBe(200);
+            expect(fetchMock.mock.calls[0][0]).toBe('https://jf.local:8096/System/Info');
+            expect(fetchMock.mock.calls[1][0]).toBe('http://jf.local:8096/System/Info');
+            expect(fetchMock.mock.calls[2][0]).toBe('http://jf.local:8096/System/Info');
+            expect(res.json()).toEqual({
+                success: true,
+                config: { url: 'http://jf.local:8096', apiKey: 'valid-key' },
+            });
 
             vi.unstubAllGlobals();
         });

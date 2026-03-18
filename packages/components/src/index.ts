@@ -17,3 +17,6 @@ export { I18nProvider } from 'react-aria';
 
 export { Modal } from './Modal/Modal';
 export type { ModalProps } from './Modal/Modal';
+
+export { Video } from './Video/Video';
+export type { VideoProps } from './Video/Video';

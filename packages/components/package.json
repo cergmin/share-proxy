@@ -5,8 +5,10 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "test": "pnpm --filter @share-proxy/video-player test && vitest run",
+    "test:unit": "pnpm --filter @share-proxy/video-player build && vitest run",
+    "storybook": "pnpm --filter @share-proxy/video-player build && storybook dev -p 6006",
+    "build-storybook": "pnpm --filter @share-proxy/video-player build && storybook build"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
@@ -14,23 +16,25 @@
   },
   "dependencies": {
     "@internationalized/date": "^3.12.0",
+    "@share-proxy/video-player": "workspace:*",
     "react-aria": "^3.47.0",
-    "react-aria-components": "^1.6.0",
+    "react-aria-components": "^1.16.0",
     "react-icons": "^5.6.0"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^8.5.8",
-    "@storybook/addon-interactions": "^8.5.8",
-    "@storybook/addon-links": "^8.5.8",
-    "@storybook/blocks": "^8.5.8",
-    "@storybook/react": "^8.5.8",
-    "@storybook/react-vite": "^8.5.8",
-    "@storybook/test": "^8.5.8",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "storybook": "^8.5.8",
+    "@storybook/addon-links": "^10.2.17",
+    "@storybook/react": "^10.2.17",
+    "@storybook/react-vite": "^10.2.17",
+    "@storybook/test": "^8.6.15",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^28.1.0",
+    "storybook": "^10.2.17",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.3",
-    "vite": "^6.0.0"
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "vitest": "^4.1.0"
   }
 }

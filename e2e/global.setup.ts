@@ -11,11 +11,12 @@ import { chromium, FullConfig } from '@playwright/test';
 import { TEST_USER } from './helpers';
 import * as fs from 'fs';
 import * as path from 'path';
+import { E2E_ADMIN_FRONTEND_ORIGIN } from './urls';
 
 const AUTH_FILE = path.join(__dirname, '.auth', 'user.json');
 
 export default async function globalSetup(config: FullConfig) {
-    const uiBase = config.projects[0].use.baseURL ?? 'http://localhost:5173';
+    const uiBase = config.projects[0].use.baseURL ?? E2E_ADMIN_FRONTEND_ORIGIN;
 
     const browser = await chromium.launch();
     // Use uiBase as baseURL so Origin headers are set correctly by Playwright

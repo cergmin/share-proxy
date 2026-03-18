@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { E2E_PROXY_ORIGIN } from './urls';
 
 /**
  * Links E2E — full CRUD + file picker
@@ -194,7 +195,7 @@ test.describe('Links', () => {
         });
         await page.reload();
 
-        await page.locator('table tbody tr').first().locator('button').first().click();
+        await page.locator('table tbody tr').first().getByRole('button', { name: /edit link|изменить ссылку/i }).click();
         await expect(page.locator('h2')).toContainText(/edit link|изменить ссылку/i);
 
         const nameInput = page.locator('input:not([type="password"])').first();
@@ -236,5 +237,57 @@ test.describe('Links', () => {
 
         await expect(page.locator('[role="dialog"]')).not.toBeVisible();
         await expect(page.locator('table')).toContainText('Keep Me');
+    });
+
+    test('shows viewer URL in the links table', async ({ page }) => {
+        await cleanLinks(page);
+        await page.request.post('/api/links', {
+            data: {
+                sourceId,
+                externalId: 'ext-public',
+                type: 'file',
+                name: 'Public Link',
+                active: true,
+                accessRules: [{ type: 'public' }],
+            }
+        });
+        await page.reload();
+
+        const viewerLink = page.locator(`table tbody tr a[href^="${E2E_PROXY_ORIGIN}/"]`).first();
+        await expect(viewerLink).toBeVisible({ timeout: 8000 });
+    });
+
+    test('shows access warnings while editing rules', async ({ page }) => {
+        await createLinkButton(page).click();
+
+        await expect(page.getByText(/никому недоступна|inaccessible because it has no access rules/i)).toBeVisible();
+
+        await page.getByRole('button', { name: /add rule|добавить правило/i }).click();
+        await page.getByRole('button', { name: /add rule|добавить правило/i }).click();
+
+        const ruleTypeSelects = page.getByLabel(/rule type|тип правила/i);
+        await ruleTypeSelects.nth(0).selectOption('public');
+        await ruleTypeSelects.nth(1).selectOption('password');
+
+        await expect(page.getByText(/доступна всем|available to everyone/i)).toBeVisible();
+    });
+
+    test('public link opens the proxy viewer', async ({ page }) => {
+        await cleanLinks(page);
+        const createRes = await page.request.post('/api/links', {
+            data: {
+                sourceId,
+                externalId: 'ext-viewer',
+                type: 'file',
+                name: 'Viewer Link',
+                active: true,
+                accessRules: [{ type: 'public' }],
+            }
+        });
+        const body = await createRes.json();
+
+        const viewerRes = await page.request.get(body.viewerUrl);
+        expect(viewerRes.ok()).toBeTruthy();
+        await expect(viewerRes.text()).resolves.toContain(`/${body.id}/stream`);
     });
 });

@@ -13,7 +13,7 @@ You are free to self-host and modify this software for personal or internal busi
 ### Prerequisites
 - [Node.js 24+](https://nodejs.org/) (use `nvm use` based on `.nvmrc`)
 - [pnpm](https://pnpm.io/)
-- [Docker](https://www.docker.com/) (Optional, for running PostgreSQL)
+- PostgreSQL 18+ reachable through `DATABASE_URL`, or [Docker](https://www.docker.com/) for the bundled local PostgreSQL container
 
 ### First-Time Setup
 1. **Install Dependencies**
@@ -24,7 +24,7 @@ You are free to self-host and modify this software for personal or internal busi
    ```bash
    cp .env.example .env
    ```
-   *By default, the project uses `pglite` (embedded DB) storing data in `storage/db`, so no external database is strictly required.*
+   *The project uses PostgreSQL only. If `DATABASE_URL` already points to a reachable PostgreSQL instance, local commands reuse it directly. Otherwise `pnpm dev` and `pnpm test` automatically start the bundled local postgres container. `POSTGRES_DATA_DIR` points directly at the postgres data directory. If an old incompatible local cluster is found, it is moved into a sibling `*-backups` directory and a fresh cluster is initialized.*
 
 3. **Database Migrations**
    ```bash
@@ -39,6 +39,8 @@ pnpm dev
 - **Admin Web** will be available at: http://localhost:5173
 - **Admin API** will be available at: http://localhost:3000
 - **Proxy Server** will be available at: http://localhost:3001
+- **Viewer Links** are built from `PROXY_ORIGIN` (defaults to `http://localhost:3001`)
+- `pnpm dev` first tries to use the PostgreSQL instance from `DATABASE_URL`; if it is not reachable, it falls back to `docker compose up -d --wait postgres`.
 
 ### CI Checks
 GitHub Actions runs the same checks below on pushes and pull requests:
@@ -53,4 +55,4 @@ Alternatively, if you want to test the full production-like build or use a real 
 ```bash
 docker-compose up --build
 ```
-*(Make sure to set `DB_TYPE=postgres` in your `.env` if you want to use the bundled postgres container).*
+*Use the same `DATABASE_URL` / `POSTGRES_DATA_DIR` values as in your `.env`.*

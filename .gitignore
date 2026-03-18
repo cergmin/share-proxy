@@ -3,6 +3,8 @@ node_modules/
 
 dist/
 **/dist/
+storybook-static/
+**/storybook-static/
 
 .env
 .env.local

@@ -7,9 +7,11 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc"
+        "build": "tsc",
+        "dev": "tsc --watch --preserveWatchOutput"
     },
     "devDependencies": {
-        "typescript": "^5.3.3"
+        "@types/node": "^25.5.0",
+        "typescript": "^5.9.3"
     }
 }

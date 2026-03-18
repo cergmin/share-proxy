@@ -1,5 +1,6 @@
 import { test, expect, request, type Page } from '@playwright/test';
 import { TEST_USER } from './helpers';
+import { E2E_ADMIN_API_ORIGIN, E2E_ADMIN_FRONTEND_ORIGIN } from './urls';
 
 /**
  * Auth E2E
@@ -41,7 +42,7 @@ test.describe('Auth — Unauthenticated redirect (API-level)', () => {
      */
     test('GET /api/auth/get-session without cookies returns no active session', async () => {
         const api = await request.newContext({
-            baseURL: 'http://localhost:3000',
+            baseURL: E2E_ADMIN_API_ORIGIN,
             storageState: { cookies: [], origins: [] },
             extraHTTPHeaders: { Cookie: '' },
         });
@@ -66,7 +67,7 @@ test.describe('Auth — Unauthenticated redirect (API-level)', () => {
 
     test('GET /api/auth/get-session with valid cookies returns a session', async ({ page }) => {
         // storageState provides valid cookies
-        const res = await page.request.get('http://localhost:3000/api/auth/get-session');
+        const res = await page.request.get(`${E2E_ADMIN_API_ORIGIN}/api/auth/get-session`);
         const body = await res.json();
         expect(body.session).not.toBeNull();
         expect(body.user).toBeDefined();
@@ -78,7 +79,7 @@ test.describe('Auth — Login form', () => {
     test('shows error for wrong password', async ({ browser }) => {
         const ctx = await browser.newContext();
         const page = await ctx.newPage();
-        await page.goto('http://localhost:5173/login', { waitUntil: 'domcontentloaded' });
+        await page.goto(`${E2E_ADMIN_FRONTEND_ORIGIN}/login`, { waitUntil: 'domcontentloaded' });
         await page.waitForURL(/\/(login|register)/, { timeout: 30000 });
 
         if (page.url().includes('/login')) {
@@ -95,7 +96,7 @@ test.describe('Auth — Login form', () => {
     test('shows error for unknown email', async ({ browser }) => {
         const ctx = await browser.newContext();
         const page = await ctx.newPage();
-        await page.goto('http://localhost:5173/login', { waitUntil: 'domcontentloaded' });
+        await page.goto(`${E2E_ADMIN_FRONTEND_ORIGIN}/login`, { waitUntil: 'domcontentloaded' });
         await page.waitForURL(/\/(login|register)/, { timeout: 30000 });
 
         if (page.url().includes('/login')) {
@@ -123,7 +124,7 @@ test.describe('Auth — Sign out', () => {
             // Fallback: call sign-out API; then navigate to see the redirect
             await page.request.post('/api/auth/sign-out');
             // After sign-out, navigating to a protected route should redirect
-            const res = await page.request.get('http://localhost:3000/api/auth/get-session');
+            const res = await page.request.get(`${E2E_ADMIN_API_ORIGIN}/api/auth/get-session`);
             const body = await res.json();
             // Session should be gone (or a new anonymous session)
             // This verifies the sign-out worked at the API level
