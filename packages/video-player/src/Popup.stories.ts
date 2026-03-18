@@ -5,7 +5,6 @@ import { renderStandaloneStory } from './storybook/renderStandaloneStory';
 const meta = {
     title: 'Video Player/Components/Popup',
     component: 'spvp-popup',
-    tags: ['autodocs'],
     render: () => renderStandaloneStory({
         frameHeight: '720px',
         setup: (stage, _root, markReady) => {

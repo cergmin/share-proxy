@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { expectStoryScreenshot, expectStoryScreenshotWithOptions, getStoryFrame, gotoStory } from './helpers';
 
 test.use({
@@ -7,6 +7,14 @@ test.use({
         height: 1200,
     },
 });
+
+async function waitForOpenVolumeSlider(frame: ReturnType<typeof getStoryFrame>): Promise<void> {
+    const sliderShell = frame.locator('.spvp-volume-slider-shell');
+    await frame.locator('.spvp-button[data-kind="mute"]').hover();
+    await expect.poll(async () => {
+        return sliderShell.evaluate((element) => Number.parseFloat(getComputedStyle(element).width) || 0);
+    }).toBeGreaterThan(90);
+}
 
 test.describe('video-player Storybook visual regressions', () => {
     test('full player default chrome', async ({ page }) => {
@@ -76,6 +84,30 @@ test.describe('video-player Storybook visual regressions', () => {
         await gotoStory(page, 'video-player-components-control-bar--default');
         const frame = getStoryFrame(page);
         await expectStoryScreenshot(frame.locator('[data-visual-capture="control-bar"]'), 'standalone-control-bar.png');
+    });
+
+    test('standalone control bar with volume open', async ({ page }) => {
+        await gotoStory(page, 'video-player-components-control-bar--default');
+        const frame = getStoryFrame(page);
+        await waitForOpenVolumeSlider(frame);
+        await expectStoryScreenshot(frame.locator('[data-visual-capture="control-bar"]'), 'standalone-control-bar-volume-open.png');
+    });
+
+    test('standalone control bar with volume open at narrow width', async ({ page }) => {
+        await page.setViewportSize({ width: 560, height: 320 });
+        await gotoStory(page, 'video-player-components-control-bar--default');
+        const frame = getStoryFrame(page);
+        await frame.locator('.spvp-button[data-kind="mute"]').hover();
+        await expect.poll(async () => {
+            return frame.locator('.spvp-volume-slider-shell').evaluate((element) => Number.parseFloat(getComputedStyle(element).width) || 0);
+        }).toBeGreaterThan(50);
+        await expectStoryScreenshot(frame.locator('[data-visual-capture="control-bar"]'), 'standalone-control-bar-volume-open-narrow.png');
+    });
+
+    test('standalone icons', async ({ page }) => {
+        await gotoStory(page, 'video-player-foundations-icons--default');
+        const frame = getStoryFrame(page);
+        await expectStoryScreenshot(frame.locator('[data-visual-capture="icons"]'), 'standalone-icons.png');
     });
 
     test('full player settings root first item hover', async ({ page }) => {

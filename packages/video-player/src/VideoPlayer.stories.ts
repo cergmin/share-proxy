@@ -29,7 +29,6 @@ function renderFullscreenPlayerStory(args: VideoPlayerOptions): HTMLElement {
 const meta = {
     title: 'Video Player/Player',
     component: 'share-proxy-video-player',
-    tags: ['autodocs'],
     argTypes: {
         ambient: {
             control: 'inline-radio',

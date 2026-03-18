@@ -38,6 +38,10 @@ When a screenshot test fails in `@share-proxy/video-player`, check the new `actu
 - Slash and total duration should use secondary styling and remain readable.
 - There should be a timeline screenshot with the preview image visible above the handle.
 
+## Icons
+- The `volume-off` glyph should render as the speaker-with-x mute icon, not as a loudness icon.
+- Icon cards should stay evenly aligned in the grid without clipped labels or cropped glyphs.
+
 ## Workflow
 1. Inspect the `actual` screenshot from Playwright artifacts.
 2. Compare it against the checklist above.

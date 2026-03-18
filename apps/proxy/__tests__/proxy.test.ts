@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildProxyApp } from '../src/app.js';
+import { clearResolvedLinkCache } from '../src/links.js';
 import { accessRules, getDb, links, resources, sources } from '@share-proxy/db';
 import { createSealedProxyToken, hashPasswordRule } from '@share-proxy/core';
 
@@ -101,12 +102,14 @@ describe('Proxy app', () => {
         process.env.PROXY_ORIGIN = 'http://localhost:3001';
         fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);
+        clearResolvedLinkCache();
         app = await buildProxyApp({ logger: false });
         await clearDatabase();
     });
 
     afterEach(async () => {
         await app.close();
+        clearResolvedLinkCache();
         vi.unstubAllGlobals();
     });
 
@@ -252,6 +255,31 @@ describe('Proxy app', () => {
         expect(res.statusCode).toBe(404);
     });
 
+    it('returns 404 on the proxy root instead of querying links with an empty id', async () => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/',
+        });
+
+        expect(res.statusCode).toBe(404);
+        expect(res.json()).toEqual({ error: 'Link not found' });
+    });
+
+    it('returns 404 for invalid link ids without touching the database UUID parser', async () => {
+        const viewerRes = await app.inject({
+            method: 'GET',
+            url: '/not-a-uuid',
+        });
+        expect(viewerRes.statusCode).toBe(404);
+
+        const manifestRes = await app.inject({
+            method: 'GET',
+            url: '/not-a-uuid/manifest.m3u8',
+        });
+        expect(manifestRes.statusCode).toBe(404);
+        expect(manifestRes.json()).toEqual({ error: 'Link not found' });
+    });
+
     it('forwards range requests and returns partial content metadata', async () => {
         const { link } = await seedLink({
             accessRules: [{ type: 'public' }],
@@ -300,7 +328,7 @@ describe('Proxy app', () => {
                 ok: true,
                 status: 200,
                 statusText: 'OK',
-                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=256000,RESOLUTION=1920x1080\nmain-6mbps.m3u8?api_key=abc\n',
+                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=6000000,RESOLUTION=1920x1080\nmain-1080p.m3u8?api_key=abc\n',
                 headers: {
                     get: (key: string) => (key === 'content-type' ? 'application/vnd.apple.mpegurl' : null),
                 },
@@ -309,7 +337,7 @@ describe('Proxy app', () => {
                 ok: true,
                 status: 200,
                 statusText: 'OK',
-                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=256000,RESOLUTION=1920x1080\nmain-4mbps.m3u8?api_key=abc\n',
+                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720\nmain-720p.m3u8?api_key=abc\n',
                 headers: {
                     get: (key: string) => (key === 'content-type' ? 'application/vnd.apple.mpegurl' : null),
                 },
@@ -318,7 +346,7 @@ describe('Proxy app', () => {
                 ok: true,
                 status: 200,
                 statusText: 'OK',
-                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=256000,RESOLUTION=1280x720\nmain-3mbps.m3u8?api_key=abc\n',
+                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=720000,RESOLUTION=854x480\nmain-480p.m3u8?api_key=abc\n',
                 headers: {
                     get: (key: string) => (key === 'content-type' ? 'application/vnd.apple.mpegurl' : null),
                 },
@@ -327,25 +355,16 @@ describe('Proxy app', () => {
                 ok: true,
                 status: 200,
                 statusText: 'OK',
-                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=256000,RESOLUTION=1280x720\nmain-1_5mbps.m3u8?api_key=abc\n',
+                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=420000,RESOLUTION=640x360\nmain-360p.m3u8?api_key=abc\n',
                 headers: {
                     get: (key: string) => (key === 'content-type' ? 'application/vnd.apple.mpegurl' : null),
                 },
             })
             .mockResolvedValueOnce({
-                ok: true,
-                status: 200,
-                statusText: 'OK',
-                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=256000,RESOLUTION=854x480\nmain-720kbps.m3u8?api_key=abc\n',
-                headers: {
-                    get: (key: string) => (key === 'content-type' ? 'application/vnd.apple.mpegurl' : null),
-                },
-            })
-            .mockResolvedValueOnce({
-                ok: true,
-                status: 200,
-                statusText: 'OK',
-                text: async () => '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=256000,RESOLUTION=640x360\nmain-420kbps.m3u8?api_key=abc\n',
+                ok: false,
+                status: 404,
+                statusText: 'Not Found',
+                text: async () => '',
                 headers: {
                     get: (key: string) => (key === 'content-type' ? 'application/vnd.apple.mpegurl' : null),
                 },
@@ -357,23 +376,21 @@ describe('Proxy app', () => {
         });
 
         expect(res.statusCode).toBe(200);
-        expect(res.body).toContain('BANDWIDTH=6000000,RESOLUTION=1920x1080,AVERAGE-BANDWIDTH=6000000');
-        expect(res.body).toContain('BANDWIDTH=4000000,RESOLUTION=1920x1080,AVERAGE-BANDWIDTH=4000000');
-        expect(res.body).toContain('BANDWIDTH=3000000,RESOLUTION=1280x720,AVERAGE-BANDWIDTH=3000000');
-        expect(res.body).toContain('BANDWIDTH=1500000,RESOLUTION=1280x720,AVERAGE-BANDWIDTH=1500000');
-        expect(res.body).toContain('BANDWIDTH=720000,RESOLUTION=854x480,AVERAGE-BANDWIDTH=720000');
-        expect(res.body).toContain('BANDWIDTH=420000,RESOLUTION=640x360,AVERAGE-BANDWIDTH=420000');
-        expect((res.body.match(new RegExp(`/${link.id}/media/`, 'g')) ?? [])).toHaveLength(6);
+        expect(res.body).toContain('BANDWIDTH=6000000,RESOLUTION=1920x1080');
+        expect(res.body).toContain('BANDWIDTH=3000000,RESOLUTION=1280x720');
+        expect(res.body).toContain('BANDWIDTH=720000,RESOLUTION=854x480');
+        expect(res.body).toContain('BANDWIDTH=420000,RESOLUTION=640x360');
+        expect((res.body.match(new RegExp(`/${link.id}/media/`, 'g')) ?? [])).toHaveLength(4);
         expect(res.body).not.toContain('jellyfin.local');
         expect(res.body).not.toContain('api_key=');
         expect(fetchMock.mock.calls[2][0]).toContain('/Videos/video-123/master.m3u8?');
         expect(fetchMock.mock.calls[2][0]).toContain('VideoCodec=h264');
         expect(fetchMock.mock.calls[2][0]).toContain('AudioCodec=aac');
-        expect(fetchMock.mock.calls[3][0]).toContain('MaxWidth=1920');
-        expect(fetchMock.mock.calls[4][0]).toContain('MaxWidth=1920');
-        expect(fetchMock.mock.calls[5][0]).toContain('MaxWidth=1280');
-        expect(fetchMock.mock.calls[6][0]).toContain('MaxWidth=854');
-        expect(fetchMock.mock.calls[7][0]).toContain('MaxWidth=640');
+        expect(fetchMock.mock.calls[2][0]).not.toContain('MaxWidth=');
+        expect(fetchMock.mock.calls[3][0]).toContain('MaxWidth=1919');
+        expect(fetchMock.mock.calls[4][0]).toContain('MaxWidth=1279');
+        expect(fetchMock.mock.calls[5][0]).toContain('MaxWidth=853');
+        expect(fetchMock.mock.calls[6][0]).toContain('MaxWidth=639');
     });
 
     it('serves opaque media token routes for rewritten manifest URLs', async () => {

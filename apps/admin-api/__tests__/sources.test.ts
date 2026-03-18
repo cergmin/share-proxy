@@ -16,6 +16,16 @@ describe('Sources API', () => {
         await app.close();
     });
 
+    it('responds on the root route for manual service checks', async () => {
+        const res = await app.inject({ method: 'GET', url: '/' });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toEqual({
+            service: 'admin-api',
+            status: 'ok',
+        });
+    });
+
     // -----------------------------------------------------------------------
     describe('GET /api/sources', () => {
         it('returns an empty array when there are no sources', async () => {

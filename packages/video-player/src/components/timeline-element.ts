@@ -9,7 +9,7 @@ export class SpvpTimelineElement extends HTMLElement {
           <div class="spvp-progress-section">
             <div class="spvp-progress-shell">
               <div class="spvp-current-time" data-hidden="false" data-overlap="false">0:00</div>
-              <div class="spvp-preview" hidden>
+              <div class="spvp-preview" data-visible="false">
                 <div class="spvp-preview-frame" data-has-image="false">
                   <div class="spvp-preview-glow" aria-hidden="true"></div>
                   <div class="spvp-preview-image" aria-hidden="true"></div>

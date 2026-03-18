@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getProxyOrigin } from '@share-proxy/core';
 import { buildProxyApp } from './app.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +17,7 @@ const start = async (): Promise<void> => {
 
     try {
         await app.listen({ port, host });
+        app.log.info(`Links base URL: ${getProxyOrigin(process.env)}`);
     } catch (error) {
         app.log.error(error);
         process.exit(1);

@@ -81,11 +81,13 @@ function renderTimelineStory(showPreview: boolean): HTMLElement {
                 if (showPreview) {
                     currentTimeBadge.dataset.hidden = 'true';
                     preview.style.left = '42%';
-                    preview.hidden = false;
+                    preview.dataset.visible = 'true';
                     previewFrame.dataset.hasImage = 'true';
                     previewGlow.style.backgroundImage = `url("${previewImageUrl}")`;
                     previewImage.style.backgroundImage = `url("${previewImageUrl}")`;
                     previewTime.textContent = '16:48';
+                } else {
+                    currentTimeBadge.dataset.hidden = 'true';
                 }
 
                 markReady();
@@ -97,7 +99,6 @@ function renderTimelineStory(showPreview: boolean): HTMLElement {
 const meta = {
     title: 'Video Player/Components/Timeline',
     component: 'spvp-timeline',
-    tags: ['autodocs'],
     render: () => renderTimelineStory(false),
 } satisfies Meta;
 

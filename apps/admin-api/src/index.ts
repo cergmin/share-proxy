@@ -15,6 +15,11 @@ dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 const start = async () => {
     const fastify = Fastify({ logger: true });
 
+    fastify.get('/', async () => ({
+        service: 'admin-api',
+        status: 'ok',
+    }));
+
     await fastify.register(cors, {
         origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
         credentials: true,

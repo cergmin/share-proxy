@@ -5,7 +5,6 @@ import { renderStandaloneStory } from './storybook/renderStandaloneStory';
 const meta = {
     title: 'Video Player/Components/Control Bar',
     component: 'spvp-control-bar',
-    tags: ['autodocs'],
     render: () => renderStandaloneStory({
         frameHeight: '240px',
         setup: (stage, _root, markReady) => {
@@ -71,6 +70,11 @@ export const Default: Story = {
         const canvas = within(canvasElement);
         await expect(await canvas.findByRole('button', { name: 'Play' })).toBeInTheDocument();
         await expect(await canvas.findByRole('button', { name: 'Settings' })).toBeInTheDocument();
-        await expect(await canvas.findByText('11:06')).toBeInTheDocument();
+
+        const timePrimary = canvasElement.querySelector('.spvp-time-primary');
+        const currentTimeBadge = canvasElement.querySelector('.spvp-current-time');
+
+        await expect(timePrimary).toHaveTextContent('11:06');
+        await expect(currentTimeBadge).toHaveTextContent('11:06');
     },
 };

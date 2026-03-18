@@ -22,38 +22,11 @@ async function getSettledMenuHeight(menu: Locator): Promise<string> {
     return menu.evaluate((element) => getComputedStyle(element).height);
 }
 
+async function getSliderShellWidth(sliderShell: Locator): Promise<number> {
+    return sliderShell.evaluate((element) => Number.parseFloat(getComputedStyle(element).width) || 0);
+}
+
 test.describe('video-player Storybook', () => {
-    test('renders player docs page without renderer errors', async ({ page }) => {
-        const pageErrors: string[] = [];
-        page.on('pageerror', (error) => {
-            pageErrors.push(error.message);
-        });
-
-        await page.goto('/?path=/docs/video-player-player--docs');
-        const frame = getStoryFrame(page);
-        await expect(frame.locator('.sbdocs-title').getByText('Player', { exact: true })).toBeVisible();
-        await expect(frame.getByRole('link', { name: 'Open canvas in new tab' })).toBeVisible();
-        await expect(frame.getByRole('textbox').first()).toBeVisible();
-        await expect
-            .poll(() => pageErrors, { timeout: 5000 })
-            .not.toContain('docsParameter.renderer is not a function');
-    });
-
-    test('renders popup docs page without renderer errors', async ({ page }) => {
-        const pageErrors: string[] = [];
-        page.on('pageerror', (error) => {
-            pageErrors.push(error.message);
-        });
-
-        await page.goto('/?path=/docs/video-player-components-popup--docs');
-        const frame = getStoryFrame(page);
-        await expect(frame.getByRole('heading', { name: 'Popup' })).toBeVisible();
-        await expect(frame.getByText('Abstract Popup')).toBeVisible();
-        await expect
-            .poll(() => pageErrors, { timeout: 5000 })
-            .not.toContain('docsParameter.renderer is not a function');
-    });
-
     test('opens root settings popup', async ({ page }) => {
         await gotoStory(page, 'video-player-player--default', { waitForReady: false });
         const frame = getStoryFrame(page);
@@ -140,7 +113,7 @@ test.describe('video-player Storybook', () => {
         const currentTimeBadge = frame.locator('.spvp-current-time');
 
         await expect(menu).toBeVisible();
-        await expect(preview).toHaveAttribute('hidden', '');
+        await expect(preview).toHaveAttribute('data-visible', 'false');
         await expect(currentTimeBadge).toHaveAttribute('data-hidden', 'true');
 
         const progressBox = await progressInput.boundingBox();
@@ -153,13 +126,120 @@ test.describe('video-player Storybook', () => {
             progressBox.x + (progressBox.width * 0.82),
             progressBox.y + (progressBox.height / 2),
         );
-        await expect(preview).toHaveAttribute('hidden', '');
+        await expect(preview).toHaveAttribute('data-visible', 'false');
         await expect(currentTimeBadge).toHaveAttribute('data-hidden', 'true');
         await expect(progressHover).toHaveAttribute('data-visible', 'true');
 
-        await expect(preview).toHaveAttribute('hidden', '');
+        await expect(preview).toHaveAttribute('data-visible', 'false');
         await expect(currentTimeBadge).toHaveAttribute('data-hidden', 'true');
         await expect(progressHover).toHaveAttribute('data-visible', 'true');
+    });
+
+    test('clicking mute toggles audio without toggling playback', async ({ page }) => {
+        await gotoStory(page, 'video-player-player--default', { waitForReady: false });
+        const frame = getStoryFrame(page);
+        const video = frame.locator('video');
+
+        await expect.poll(async () => video.evaluate((element) => element.paused)).toBe(true);
+        await expect.poll(async () => video.evaluate((element) => element.muted)).toBe(false);
+
+        await frame.getByRole('button', { name: 'Mute' }).click();
+
+        await expect.poll(async () => video.evaluate((element) => element.muted)).toBe(true);
+        await expect.poll(async () => video.evaluate((element) => element.paused)).toBe(true);
+        await expect(frame.getByRole('button', { name: 'Unmute' })).toBeVisible();
+    });
+
+    test('volume slider does not retain focus after click', async ({ page }) => {
+        await gotoStory(page, 'video-player-player--default', { waitForReady: false });
+        const frame = getStoryFrame(page);
+        const muteButton = frame.locator('.spvp-button[data-kind="mute"]');
+        const volumeRange = frame.locator('.spvp-volume-range');
+
+        await muteButton.hover();
+        await expect.poll(async () => volumeRange.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe('auto');
+        await volumeRange.click({ position: { x: 24, y: 22 } });
+
+        await expect.poll(async () => volumeRange.evaluate((element) => element.ownerDocument.activeElement === element)).toBe(false);
+    });
+
+    test('volume slider stays collapsed until hover', async ({ page }) => {
+        await gotoStory(page, 'video-player-components-control-bar--default');
+        const frame = getStoryFrame(page);
+        const settingsButton = frame.locator('.spvp-button[data-kind="settings"]');
+        const muteButton = frame.locator('.spvp-button[data-kind="mute"]');
+        const sliderShell = frame.locator('.spvp-volume-slider-shell');
+
+        await expect.poll(async () => getSliderShellWidth(sliderShell)).toBe(0);
+        await settingsButton.hover();
+        await expect.poll(async () => getSliderShellWidth(sliderShell)).toBe(0);
+        await muteButton.hover();
+        await expect.poll(async () => getSliderShellWidth(sliderShell)).toBeGreaterThan(90);
+    });
+
+    test('volume slider stays open inside left controls and closes after leaving them', async ({ page }) => {
+        await gotoStory(page, 'video-player-components-control-bar--default');
+        const frame = getStoryFrame(page);
+        const muteButton = frame.locator('.spvp-button[data-kind="mute"]');
+        const settingsButton = frame.locator('.spvp-button[data-kind="settings"]');
+        const timeToggle = frame.locator('.spvp-time-toggle');
+        const sliderShell = frame.locator('.spvp-volume-slider-shell');
+
+        await muteButton.hover();
+        await expect.poll(async () => getSliderShellWidth(sliderShell)).toBeGreaterThan(90);
+
+        await timeToggle.hover();
+        await expect.poll(async () => getSliderShellWidth(sliderShell)).toBeGreaterThan(90);
+
+        await settingsButton.hover();
+        await expect.poll(async () => getSliderShellWidth(sliderShell)).toBe(0);
+    });
+
+    test('volume slider does not overlap the time toggle when expanded', async ({ page }) => {
+        await gotoStory(page, 'video-player-components-control-bar--default');
+        const frame = getStoryFrame(page);
+        const muteButton = frame.locator('.spvp-button[data-kind="mute"]');
+        const volume = frame.locator('.spvp-volume');
+        const timeToggle = frame.locator('.spvp-time-toggle');
+
+        await muteButton.hover();
+        await expect.poll(async () => getSliderShellWidth(frame.locator('.spvp-volume-slider-shell'))).toBeGreaterThan(90);
+
+        const volumeBox = await volume.boundingBox();
+        const timeToggleBox = await timeToggle.boundingBox();
+
+        if (!volumeBox || !timeToggleBox) {
+            throw new Error('Expected volume and time toggle bounding boxes to be available');
+        }
+
+        expect(volumeBox.x + volumeBox.width).toBeLessThanOrEqual(timeToggleBox.x);
+    });
+
+    test('volume slider stays aligned and does not overlap the time toggle at narrow widths', async ({ page }) => {
+        await page.setViewportSize({ width: 560, height: 320 });
+        await gotoStory(page, 'video-player-components-control-bar--default');
+        const frame = getStoryFrame(page);
+        const muteButton = frame.locator('.spvp-button[data-kind="mute"]');
+        const sliderShell = frame.locator('.spvp-volume-slider-shell');
+        const timeToggle = frame.locator('.spvp-time-toggle');
+        const settingsButton = frame.locator('.spvp-button[data-kind="settings"]');
+
+        await muteButton.hover();
+        await expect.poll(async () => getSliderShellWidth(sliderShell)).toBeGreaterThan(50);
+
+        const muteButtonBox = await muteButton.boundingBox();
+        const sliderShellBox = await sliderShell.boundingBox();
+        const timeToggleBox = await timeToggle.boundingBox();
+        const settingsButtonBox = await settingsButton.boundingBox();
+
+        if (!muteButtonBox || !sliderShellBox || !timeToggleBox || !settingsButtonBox) {
+            throw new Error('Expected narrow control bar bounding boxes to be available');
+        }
+
+        expect(sliderShellBox.x - (muteButtonBox.x + muteButtonBox.width)).toBeLessThanOrEqual(6);
+        expect(sliderShellBox.x - (muteButtonBox.x + muteButtonBox.width)).toBeGreaterThanOrEqual(3);
+        expect(sliderShellBox.x + sliderShellBox.width).toBeLessThanOrEqual(timeToggleBox.x);
+        expect(timeToggleBox.x + timeToggleBox.width).toBeLessThanOrEqual(settingsButtonBox.x);
     });
 
     test('renders standalone popup story', async ({ page }) => {
@@ -184,5 +264,13 @@ test.describe('video-player Storybook', () => {
 
         await expect(frame.getByLabel('Seek')).toBeVisible();
         await expect(frame.locator('.spvp-current-time')).toBeHidden();
+    });
+
+    test('renders standalone icons story', async ({ page }) => {
+        await gotoStory(page, 'video-player-foundations-icons--default');
+        const frame = getStoryFrame(page);
+
+        await expect(frame.getByText('volume-off')).toBeVisible();
+        await expect(frame.getByText('fullscreen-exit')).toBeVisible();
     });
 });

@@ -10,6 +10,10 @@ import { linksRoutes } from '../src/routes/links.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
     const app = Fastify({ logger: false });
+    app.get('/', async () => ({
+        service: 'admin-api',
+        status: 'ok',
+    }));
     await app.register(sourcesRoutes);
     await app.register(linksRoutes);
     await app.ready();

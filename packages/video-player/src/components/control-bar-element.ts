@@ -10,14 +10,16 @@ export class SpvpControlBarElement extends HTMLElement {
         this.dataset.initialized = 'true';
         this.innerHTML = `
           <spvp-timeline></spvp-timeline>
-          <div class="spvp-controls">
+          <div class="spvp-controls" data-volume-open="false">
             <div class="spvp-left">
               <button class="spvp-button" type="button" data-kind="play" aria-label="Play">${createIcon('play')}</button>
               <button class="spvp-button" type="button" data-kind="backward" aria-label="Rewind 10 seconds">${createIcon('backward')}</button>
               <button class="spvp-button" type="button" data-kind="forward" aria-label="Forward 10 seconds">${createIcon('forward')}</button>
               <div class="spvp-volume">
                 <button class="spvp-button" type="button" data-kind="mute" aria-label="Mute">${createIcon('volume-big')}</button>
-                <input class="spvp-volume-range" type="range" min="0" max="100" value="100" aria-label="Volume" />
+                <div class="spvp-volume-slider-shell">
+                  <input class="spvp-volume-range" type="range" min="0" max="100" value="100" aria-label="Volume" tabindex="-1" />
+                </div>
               </div>
               <button class="spvp-time-toggle" type="button" aria-label="Toggle time display mode">
                 <span class="spvp-time-primary">0:00</span><span class="spvp-time-secondary"> / --:--</span>
@@ -30,6 +32,30 @@ export class SpvpControlBarElement extends HTMLElement {
             </div>
           </div>
         `;
+
+        const controls = this.querySelector<HTMLElement>('.spvp-controls');
+        const leftControls = this.querySelector<HTMLElement>('.spvp-left');
+        const muteButton = this.querySelector<HTMLButtonElement>('[data-kind="mute"]');
+
+        if (!controls || !leftControls || !muteButton) {
+            return;
+        }
+
+        const setVolumeOpen = (open: boolean) => {
+            controls.dataset.volumeOpen = open ? 'true' : 'false';
+        };
+
+        muteButton.addEventListener('pointerenter', () => {
+            setVolumeOpen(true);
+        });
+
+        leftControls.addEventListener('pointerleave', () => {
+            setVolumeOpen(false);
+        });
+
+        leftControls.addEventListener('pointercancel', () => {
+            setVolumeOpen(false);
+        });
     }
 
     get timeline(): SpvpTimelineElement {

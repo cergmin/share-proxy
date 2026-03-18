@@ -20,6 +20,7 @@
 - `apps/admin-web/` — Фронтенд админки (Vite + React 19 + CSS Modules). Управление источниками, ссылками, просмотр аналитики.
 - `apps/admin-api/` — Бэкенд админки (Fastify). CRUD для ссылок, интеграция с БД и BetterAuth. Интеграция с адаптерами для навигации по файлам при создании ссылок.
 - `apps/proxy/` — Высокопроизводительный стриминговый сервер (Fastify). Отвечает за отдачу контента, обработку редиректов и сбор сырой аналитики.
+  - Исходники proxy больше не держатся в одном `src/app.ts`: `src/app.ts` только собирает Fastify, маршруты живут в `src/routes/*`, Jellyfin-логика в `src/jellyfin.ts`, доступ/куки в `src/auth.ts`, lookup ссылок в `src/links.ts`, viewer HTML/SSR-подготовка в `src/viewer-pages.ts`, общие типы в `src/proxy-types.ts`, а переиспользуемый LRU/TTL cache вынесен в `src/cache.ts`.
 - `packages/db/` — Схема базы данных (Drizzle ORM) и миграции. Общий пакет для admin-api и proxy.
 - `packages/adapters/` — Унифицированные адаптеры для различных источников контента (Jellyfin, S3, Google Drive).
 - `packages/core/` — Общие утилиты, типы данных, константы.
@@ -163,7 +164,8 @@
   - Debug overlay больше не содержит ambient-specific controls или ambient diagnostics; он показывает только фактические `size`, `bitrate` и `fps`.
 - **Стриминг:** Полный прокси-пропуск байтов из адаптера с учетом HTTP-заголовка `Range` для возможности перемотки, включая корректные `206 Partial Content` заголовки.
 - **Jellyfin adaptive playback:** Proxy умеет отдавать viewer-совместимый HLS manifest (`GET /:id/manifest.m3u8`), проксировать вложенные media playlist/segments через opaque sealed route (`GET /:id/media/:token`) и публиковать trickplay preview metadata (`GET /:id/preview-tracks.json`).
-  - `GET /:id/manifest.m3u8` не отдает upstream master manifest как есть: proxy собирает synthetic master из Jellyfin bitrate-based preset-ов (`6 Mbps`, `4 Mbps`, `3 Mbps`, `1.5 Mbps`, `720 kbps`, `420 kbps`) и переписывает каждый variant URI в локальный opaque media route. Это ближе к quality ladder самого Jellyfin UI и дает браузеру реальный multi-quality HLS для ABR и ручного переключения качества без раскрытия upstream.
+  - `GET /:id/manifest.m3u8` не отдает upstream master manifest как есть: proxy динамически опрашивает Jellyfin с последовательным сужением `MaxWidth`, собирает фактически доступные variant-ы из ответов `master.m3u8` и переписывает каждый variant URI в локальный opaque media route. Таким образом quality ladder формируется из реальных upstream rendition-ов, а не из захардкоженного preset-списка.
+  - `resolveLink` использует in-memory LRU cache на 100 записей с TTL 1 минута; кэш хранит как найденные ссылки, так и miss-результаты, а просроченные значения выкидываются при обращении к cache API.
   - Viewer на стороне Shaka выставляет `streaming.bufferingGoal = 60` и `bufferBehind = 60`, чтобы держать заметно более длинный буфер впереди; это best-effort цель и фактический буфер зависит от сети, размера сегментов и ограничений браузера/MSE.
   - Browser никогда не получает прямой upstream Jellyfin URL, `api_key`, `MediaSourceId` или `UserId`: manifest и preview URLs всегда переписываются в локальные proxy route-ы.
   - Trickplay preview sheets дополнительно фильтруются по origin, чтобы proxy не ходил на чужие хосты с Jellyfin token/header даже если upstream manifest вернет абсолютный внешний URL.
